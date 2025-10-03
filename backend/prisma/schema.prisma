@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Student {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  major       String?
+  year        String?
+  skills      String?  // Store as JSON string for SQLite compatibility
+  availability String? // Store as JSON string for time blocks
+  interests   String?  // Text field for interests
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  teamMemberships TeamMember[]
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  maxMembers  Int      @default(4)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  members TeamMember[]
+}
+
+model TeamMember {
+  id       Int @id @default(autoincrement())
+  studentId Int
+  teamId    Int
+  role     String? // e.g., "leader", "member"
+  
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  team    Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, teamId])
+}

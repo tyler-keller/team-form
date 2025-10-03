@@ -1,0 +1,193 @@
+.student-profile-form {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.student-profile-form h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #f0f0f0;
+  font-size: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #f0f0f0;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f0f0f0;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: rgba(240, 240, 240, 0.6);
+}
+
+.availability-grid {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.time-slots-header {
+  display: grid;
+  grid-template-columns: 100px repeat(18, 40px);
+  gap: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.day-header {
+  font-weight: bold;
+  color: #f0f0f0;
+  display: flex;
+  align-items: center;
+}
+
+.time-header {
+  font-size: 0.7rem;
+  color: #f0f0f0;
+  text-align: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 100px repeat(18, 40px);
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.day-label {
+  font-weight: 500;
+  color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.time-slot {
+  width: 40px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: transparent;
+}
+
+.time-slot:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.time-slot.selected {
+  background: #4CAF50;
+  border-color: #45a049;
+  color: white;
+}
+
+.time-slot.selected:hover {
+  background: #45a049;
+}
+
+.error-message {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.5);
+  color: #ffcdd2;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.submit-button {
+  width: 100%;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.submit-button:disabled {
+  background: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .student-profile-form {
+    padding: 1rem;
+    margin: 1rem;
+  }
+  
+  .time-slots-header,
+  .day-row {
+    grid-template-columns: 80px repeat(9, 35px);
+  }
+  
+  .time-slot {
+    width: 35px;
+    height: 25px;
+    font-size: 0.7rem;
+  }
+  
+  .time-header {
+    font-size: 0.6rem;
+    height: 35px;
+  }
+}
