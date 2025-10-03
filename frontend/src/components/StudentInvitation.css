@@ -1,0 +1,367 @@
+.student-invitation {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.invitation-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.invitation-header h2 {
+  color: #f0f0f0;
+  margin-bottom: 1rem;
+  font-size: 2.5rem;
+}
+
+.project-description {
+  color: rgba(240, 240, 240, 0.8);
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.project-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.info-item {
+  color: #f0f0f0;
+  font-size: 1rem;
+}
+
+.info-item strong {
+  color: #4CAF50;
+  margin-right: 0.5rem;
+}
+
+.profile-step, .teams-step {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 2rem;
+}
+
+.profile-step h3, .teams-step h3 {
+  color: #f0f0f0;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.profile-step p, .teams-step p {
+  color: rgba(240, 240, 240, 0.8);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.team-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.team-card.joined {
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.team-card.full {
+  opacity: 0.6;
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.team-header h4 {
+  color: #f0f0f0;
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.team-number {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.team-members {
+  margin-bottom: 1rem;
+}
+
+.team-members strong {
+  color: #f0f0f0;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.no-members {
+  color: rgba(240, 240, 240, 0.6);
+  font-style: italic;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.member-item {
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.member-name {
+  font-weight: 500;
+}
+
+.member-role {
+  color: rgba(240, 240, 240, 0.7);
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.team-description {
+  margin-bottom: 1rem;
+  color: rgba(240, 240, 240, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.team-description strong {
+  color: #4CAF50;
+}
+
+.team-actions {
+  margin-top: 1rem;
+}
+
+.member-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.edit-button, .leave-button, .join-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.edit-button {
+  background: #4CAF50;
+  color: white;
+}
+
+.edit-button:hover {
+  background: #45a049;
+}
+
+.leave-button {
+  background: rgba(244, 67, 54, 0.2);
+  color: #ffcdd2;
+  border: 1px solid rgba(244, 67, 54, 0.5);
+}
+
+.leave-button:hover {
+  background: rgba(244, 67, 54, 0.3);
+}
+
+.join-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 100%;
+}
+
+.join-button:hover:not(.disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.join-button.disabled {
+  background: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.loading, .error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #f0f0f0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.error-message {
+  color: #ffcdd2;
+  background: rgba(244, 67, 54, 0.2);
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal h3 {
+  color: #f0f0f0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  color: #f0f0f0;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f0f0f0;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.cancel-button, .save-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.cancel-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.save-button {
+  background: #4CAF50;
+  color: white;
+}
+
+.save-button:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .student-invitation {
+    padding: 1rem;
+  }
+  
+  .invitation-header {
+    padding: 1rem;
+  }
+  
+  .project-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .teams-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .member-actions {
+    flex-direction: column;
+  }
+  
+  .modal {
+    margin: 1rem;
+    padding: 1rem;
+  }
+}

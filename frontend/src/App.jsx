@@ -5,6 +5,8 @@ import StudentsList from './components/StudentsList'
 import CreateTeamForm from './components/CreateTeamForm'
 import TeamsList from './components/TeamsList'
 import AutoGenerateTeams from './components/AutoGenerateTeams'
+import InstructorDashboard from './components/InstructorDashboard'
+import StudentInvitation from './components/StudentInvitation'
 import './App.css'
 
 function App() {
@@ -12,6 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('form')
   const [successMessage, setSuccessMessage] = useState('')
+  const [urlParams, setUrlParams] = useState({})
 
   const testConnection = async () => {
     setLoading(true)
@@ -28,6 +31,16 @@ function App() {
 
   useEffect(() => {
     testConnection()
+    
+    // Check for URL parameters for student invitation
+    const urlParams = new URLSearchParams(window.location.search)
+    const projectId = urlParams.get('project')
+    const email = urlParams.get('email')
+    
+    if (projectId && email) {
+      setUrlParams({ projectId, email })
+      setActiveTab('invitation')
+    }
   }, [])
 
   const handleStudentCreated = (student) => {
@@ -73,38 +86,46 @@ function App() {
           </div>
         )}
 
-        <div className="navigation">
-          <button 
-            className={`nav-button ${activeTab === 'form' ? 'active' : ''}`}
-            onClick={() => setActiveTab('form')}
-          >
-            Create Profile
-          </button>
-          <button 
-            className={`nav-button ${activeTab === 'students' ? 'active' : ''}`}
-            onClick={() => setActiveTab('students')}
-          >
-            View Students
-          </button>
-          <button 
-            className={`nav-button ${activeTab === 'create-team' ? 'active' : ''}`}
-            onClick={() => setActiveTab('create-team')}
-          >
-            Create Team
-          </button>
-          <button 
-            className={`nav-button ${activeTab === 'auto-generate' ? 'active' : ''}`}
-            onClick={() => setActiveTab('auto-generate')}
-          >
-            Auto-Generate
-          </button>
-          <button 
-            className={`nav-button ${activeTab === 'teams' ? 'active' : ''}`}
-            onClick={() => setActiveTab('teams')}
-          >
-            View Teams
-          </button>
-        </div>
+        {!urlParams.projectId && (
+          <div className="navigation">
+            <button 
+              className={`nav-button ${activeTab === 'form' ? 'active' : ''}`}
+              onClick={() => setActiveTab('form')}
+            >
+              Create Profile
+            </button>
+            <button 
+              className={`nav-button ${activeTab === 'students' ? 'active' : ''}`}
+              onClick={() => setActiveTab('students')}
+            >
+              View Students
+            </button>
+            <button 
+              className={`nav-button ${activeTab === 'create-team' ? 'active' : ''}`}
+              onClick={() => setActiveTab('create-team')}
+            >
+              Create Team
+            </button>
+            <button 
+              className={`nav-button ${activeTab === 'auto-generate' ? 'active' : ''}`}
+              onClick={() => setActiveTab('auto-generate')}
+            >
+              Auto-Generate
+            </button>
+            <button 
+              className={`nav-button ${activeTab === 'teams' ? 'active' : ''}`}
+              onClick={() => setActiveTab('teams')}
+            >
+              View Teams
+            </button>
+            <button 
+              className={`nav-button ${activeTab === 'instructor' ? 'active' : ''}`}
+              onClick={() => setActiveTab('instructor')}
+            >
+              Instructor
+            </button>
+          </div>
+        )}
 
         {activeTab === 'form' && (
           <StudentProfileForm onSuccess={handleStudentCreated} />
@@ -124,6 +145,17 @@ function App() {
 
         {activeTab === 'teams' && (
           <TeamsList />
+        )}
+
+        {activeTab === 'instructor' && (
+          <InstructorDashboard />
+        )}
+
+        {activeTab === 'invitation' && urlParams.projectId && (
+          <StudentInvitation 
+            projectId={urlParams.projectId} 
+            studentEmail={urlParams.email} 
+          />
         )}
       </header>
     </div>

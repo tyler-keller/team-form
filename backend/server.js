@@ -59,6 +59,161 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
+// Instructor routes
+app.post('/api/instructors', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const instructor = await prisma.instructor.create({
+      data: { name, email }
+    });
+    res.json(instructor);
+  } catch (error) {
+    console.error('Error creating instructor:', error);
+    res.status(500).json({ error: 'Failed to create instructor' });
+  }
+});
+
+app.get('/api/instructors', async (req, res) => {
+  try {
+    const instructors = await prisma.instructor.findMany({
+      include: {
+        projects: {
+          include: {
+            teams: {
+              include: {
+                members: {
+                  include: {
+                    student: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    res.json(instructors);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch instructors' });
+  }
+});
+
+// Project routes
+app.post('/api/projects', async (req, res) => {
+  try {
+    const { name, description, minTeamSize, maxTeamSize, studentEmails, instructorId } = req.body;
+    
+    // Create the project
+    const project = await prisma.project.create({
+      data: {
+        name,
+        description,
+        minTeamSize,
+        maxTeamSize,
+        studentEmails: JSON.stringify(studentEmails),
+        instructorId: parseInt(instructorId)
+      }
+    });
+    
+    // Calculate number of teams needed
+    const totalStudents = studentEmails.length;
+    const numTeams = Math.floor(totalStudents / minTeamSize);
+    
+    // Create empty teams
+    const teams = [];
+    for (let i = 1; i <= numTeams; i++) {
+      const team = await prisma.team.create({
+        data: {
+          name: `Team ${i}`,
+          description: `Auto-created team for ${project.name}`,
+          maxMembers: maxTeamSize,
+          teamNumber: i,
+          projectId: project.id
+        }
+      });
+      teams.push(team);
+    }
+    
+    // Mock email sending
+    console.log(`📧 Sending invitation emails to ${studentEmails.length} students for project: ${project.name}`);
+    studentEmails.forEach((email, index) => {
+      console.log(`📧 Email ${index + 1}: ${email}`);
+      console.log(`   Subject: Join Team Formation for "${project.name}"`);
+      console.log(`   Body: Please complete your profile and join a team at: http://localhost:3000/join?project=${project.id}&email=${encodeURIComponent(email)}`);
+      console.log(`   ---`);
+    });
+    
+    const completeProject = await prisma.project.findUnique({
+      where: { id: project.id },
+      include: {
+        instructor: true,
+        teams: true
+      }
+    });
+    
+    res.json({
+      project: completeProject,
+      teamsCreated: teams.length,
+      emailsSent: studentEmails.length
+    });
+    
+  } catch (error) {
+    console.error('Error creating project:', error);
+    res.status(500).json({ error: 'Failed to create project' });
+  }
+});
+
+app.get('/api/projects', async (req, res) => {
+  try {
+    const projects = await prisma.project.findMany({
+      include: {
+        instructor: true,
+        teams: {
+          include: {
+            members: {
+              include: {
+                student: true
+              }
+            }
+          }
+        }
+      }
+    });
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
+app.get('/api/projects/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        instructor: true,
+        teams: {
+          include: {
+            members: {
+              include: {
+                student: true
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    res.json(project);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch project' });
+  }
+});
+
 // Team routes
 app.get('/api/teams', async (req, res) => {
   try {
@@ -68,7 +223,8 @@ app.get('/api/teams', async (req, res) => {
           include: {
             student: true
           }
-        }
+        },
+        project: true
       }
     });
     res.json(teams);
@@ -99,6 +255,32 @@ app.post('/api/teams/:teamId/members', async (req, res) => {
     const { teamId } = req.params;
     const { studentId, role } = req.body;
     
+    // Check if team is full
+    const team = await prisma.team.findUnique({
+      where: { id: parseInt(teamId) },
+      include: { members: true }
+    });
+    
+    if (team.members.length >= team.maxMembers) {
+      return res.status(400).json({ error: 'Team is full' });
+    }
+    
+    // Check if student is already in a team for this project
+    if (team.projectId) {
+      const existingMembership = await prisma.teamMember.findFirst({
+        where: {
+          studentId: parseInt(studentId),
+          team: {
+            projectId: team.projectId
+          }
+        }
+      });
+      
+      if (existingMembership) {
+        return res.status(400).json({ error: 'Student is already in a team for this project' });
+      }
+    }
+    
     const teamMember = await prisma.teamMember.create({
       data: {
         studentId: parseInt(studentId),
@@ -107,12 +289,90 @@ app.post('/api/teams/:teamId/members', async (req, res) => {
       },
       include: {
         student: true,
-        team: true
+        team: {
+          include: {
+            project: true
+          }
+        }
       }
     });
     res.json(teamMember);
   } catch (error) {
+    console.error('Error adding student to team:', error);
     res.status(500).json({ error: 'Failed to add student to team' });
+  }
+});
+
+// Update team details
+app.put('/api/teams/:teamId', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { name, description } = req.body;
+    
+    const team = await prisma.team.update({
+      where: { id: parseInt(teamId) },
+      data: {
+        name,
+        description
+      },
+      include: {
+        members: {
+          include: {
+            student: true
+          }
+        },
+        project: true
+      }
+    });
+    
+    res.json(team);
+  } catch (error) {
+    console.error('Error updating team:', error);
+    res.status(500).json({ error: 'Failed to update team' });
+  }
+});
+
+// Get teams for a specific project
+app.get('/api/projects/:projectId/teams', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    const teams = await prisma.team.findMany({
+      where: { projectId: parseInt(projectId) },
+      include: {
+        members: {
+          include: {
+            student: true
+          }
+        },
+        project: true
+      },
+      orderBy: { teamNumber: 'asc' }
+    });
+    
+    res.json(teams);
+  } catch (error) {
+    console.error('Error fetching project teams:', error);
+    res.status(500).json({ error: 'Failed to fetch project teams' });
+  }
+});
+
+// Remove student from team
+app.delete('/api/teams/:teamId/members/:studentId', async (req, res) => {
+  try {
+    const { teamId, studentId } = req.params;
+    
+    await prisma.teamMember.deleteMany({
+      where: {
+        teamId: parseInt(teamId),
+        studentId: parseInt(studentId)
+      }
+    });
+    
+    res.json({ message: 'Student removed from team' });
+  } catch (error) {
+    console.error('Error removing student from team:', error);
+    res.status(500).json({ error: 'Failed to remove student from team' });
   }
 });
 
