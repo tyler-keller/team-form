@@ -4,6 +4,7 @@ import StudentProfileForm from './components/StudentProfileForm'
 import StudentsList from './components/StudentsList'
 import CreateTeamForm from './components/CreateTeamForm'
 import TeamsList from './components/TeamsList'
+import AutoGenerateTeams from './components/AutoGenerateTeams'
 import './App.css'
 
 function App() {
@@ -37,6 +38,12 @@ function App() {
 
   const handleTeamCreated = (team) => {
     setSuccessMessage(`Team "${team.name}" created successfully!`)
+    setActiveTab('teams')
+    setTimeout(() => setSuccessMessage(''), 5000)
+  }
+
+  const handleTeamsGenerated = (teams) => {
+    setSuccessMessage(`${teams.length} teams generated successfully!`)
     setActiveTab('teams')
     setTimeout(() => setSuccessMessage(''), 5000)
   }
@@ -86,6 +93,12 @@ function App() {
             Create Team
           </button>
           <button 
+            className={`nav-button ${activeTab === 'auto-generate' ? 'active' : ''}`}
+            onClick={() => setActiveTab('auto-generate')}
+          >
+            Auto-Generate
+          </button>
+          <button 
             className={`nav-button ${activeTab === 'teams' ? 'active' : ''}`}
             onClick={() => setActiveTab('teams')}
           >
@@ -103,6 +116,10 @@ function App() {
 
         {activeTab === 'create-team' && (
           <CreateTeamForm onSuccess={handleTeamCreated} />
+        )}
+
+        {activeTab === 'auto-generate' && (
+          <AutoGenerateTeams onSuccess={handleTeamsGenerated} />
         )}
 
         {activeTab === 'teams' && (
