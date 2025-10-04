@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  // Simulate user sign-up check (replace with real logic)
+  const isStudentSignedUp = localStorage.getItem('studentSignedUp') === 'true';
 
   return (
     <div className="landing-container">
@@ -11,7 +13,12 @@ const LandingPage = () => {
         <h1 className="logo">Team Formation App</h1>
         <div className="nav-buttons">
           <button onClick={() => navigate('/instructor')} className="nav-btn">Instructor View</button>
-          <button onClick={() => navigate('/student')} className="nav-btn">Student View</button>
+          <button
+            onClick={() => navigate('/student-email')}
+            className="nav-btn"
+          >
+            Student View
+          </button>
         </div>
       </nav>
       <main className="main-content">

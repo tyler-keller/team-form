@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './StudentProfileForm.css'
 
@@ -12,9 +12,36 @@ const StudentProfileForm = ({ onSuccess }) => {
     interests: '',
     availability: {}
   })
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    // Only prefill if editing profile
+    if (window.location.pathname === '/edit-profile') {
+      const email = localStorage.getItem('studentEmail');
+      if (email) {
+        setLoading(true);
+        fetch(`/api/students`)
+          .then(res => res.json())
+          .then(students => {
+            const student = students.find(s => s.email === email);
+            if (student) {
+              setFormData({
+                name: student.name || '',
+                email: student.email || '',
+                major: student.major || '',
+                year: student.year || '',
+                skills: Array.isArray(student.skills) ? student.skills.join(', ') : (student.skills ? JSON.parse(student.skills).join(', ') : ''),
+                interests: student.interests || '',
+                availability: student.availability ? JSON.parse(student.availability) : {}
+              });
+            }
+          })
+          .catch(() => {})
+          .finally(() => setLoading(false));
+      }
+    }
+  }, []);
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const timeSlots = [
@@ -67,6 +94,9 @@ const StudentProfileForm = ({ onSuccess }) => {
       if (onSuccess) {
         onSuccess(response.data)
       }
+  // Mark student as signed up and store email
+  localStorage.setItem('studentSignedUp', 'true');
+  localStorage.setItem('studentEmail', formData.email);
       
       // Reset form
       setFormData({
