@@ -45,9 +45,9 @@ const StudentProfileForm = ({ onSuccess }) => {
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const timeSlots = [
-    '6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
+    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
     '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM',
-    '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM', '11:00 PM'
+    '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'
   ]
 
   const handleInputChange = (e) => {
@@ -201,16 +201,16 @@ const StudentProfileForm = ({ onSuccess }) => {
         <div className="form-group">
           <label>Availability</label>
           <div className="availability-grid">
-            <div className="time-slots-header">
-              <div className="day-header"></div>
-              {timeSlots.map(timeSlot => (
-                <div key={timeSlot} className="time-header">{timeSlot}</div>
+            <div className="days-header">
+              <div className="time-header"></div>
+              {days.map(day => (
+                <div key={day} className="day-header">{day}</div>
               ))}
             </div>
-            {days.map(day => (
-              <div key={day} className="day-row">
-                <div className="day-label">{day}</div>
-                {timeSlots.map(timeSlot => (
+            {timeSlots.map(timeSlot => (
+              <div key={timeSlot} className="time-row">
+                <div className="time-label">{timeSlot}</div>
+                {days.map(day => (
                   <button
                     key={`${day}-${timeSlot}`}
                     type="button"
