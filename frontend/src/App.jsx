@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 
 import LandingPage from './components/LandingPage';
 import InstructorDashboard from './components/InstructorDashboard';
+import InstructorEntry from './components/InstructorEntry';
 import StudentProfileForm from './components/StudentProfileForm';
 import StudentsList from './components/StudentsList';
 import CreateTeamForm from './components/CreateTeamForm';
@@ -19,6 +20,7 @@ function App() {
     <div className="app">
       <Routes>
   <Route path="/" element={<LandingPage />} />
+  <Route path="/instructor-entry" element={<InstructorEntry />} />
   <Route path="/instructor" element={<InstructorDashboard />} />
   <Route path="/student" element={<StudentProfileForm />} />
   <Route path="/student-dashboard" element={<StudentDashboard />} />

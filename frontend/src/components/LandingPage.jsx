@@ -12,7 +12,7 @@ const LandingPage = () => {
       <nav className="navbar">
         <h1 className="logo">Team Formation App</h1>
         <div className="nav-buttons">
-          <button onClick={() => navigate('/instructor')} className="nav-btn">Instructor View</button>
+          <button onClick={() => navigate('/instructor-entry')} className="nav-btn">Instructor View</button>
           <button
             onClick={() => navigate('/student-email')}
             className="nav-btn"

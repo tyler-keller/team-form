@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './InstructorDashboard.css'
+import { useNavigate } from 'react-router-dom'
 
 const InstructorDashboard = () => {
+  const navigate = useNavigate()
   const [instructors, setInstructors] = useState([])
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateProject, setShowCreateProject] = useState(false)
-  const [newInstructor, setNewInstructor] = useState({ name: '', email: '' })
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -39,17 +40,15 @@ const InstructorDashboard = () => {
     }
   }
 
-  const handleCreateInstructor = async (e) => {
-    e.preventDefault()
-    try {
-      await axios.post('/api/instructors', newInstructor)
-      setNewInstructor({ name: '', email: '' })
-      fetchData()
-    } catch (error) {
-      console.error('Error creating instructor:', error)
-      setError('Failed to create instructor')
+  // Ensure we have an instructor context; otherwise send to entry page
+  useEffect(() => {
+    const email = localStorage.getItem('instructorEmail')
+    if (!email) {
+      navigate('/instructor-entry')
     }
-  }
+  }, [navigate])
+
+  
 
   const handleCreateProject = async (e) => {
     e.preventDefault()
@@ -99,32 +98,15 @@ const InstructorDashboard = () => {
       {error && <div className="error-message">{error}</div>}
       
       <div className="dashboard-sections">
-        {/* Create Instructor Section */}
+        {/* Instructor context info */}
         <div className="section">
-          <h3>Create Instructor</h3>
-          <form onSubmit={handleCreateInstructor} className="instructor-form">
-            <div className="form-group">
-              <label htmlFor="instructorName">Name</label>
-              <input
-                type="text"
-                id="instructorName"
-                value={newInstructor.name}
-                onChange={(e) => setNewInstructor({ ...newInstructor, name: e.target.value })}
-                required
-              />
+          <h3>Instructor</h3>
+          <div>
+            Using: {localStorage.getItem('instructorEmail') || 'Unknown'}
+            <div style={{ marginTop: '0.5rem' }}>
+              <button className="toggle-button" onClick={() => navigate('/instructor-entry')}>Switch Instructor</button>
             </div>
-            <div className="form-group">
-              <label htmlFor="instructorEmail">Email</label>
-              <input
-                type="email"
-                id="instructorEmail"
-                value={newInstructor.email}
-                onChange={(e) => setNewInstructor({ ...newInstructor, email: e.target.value })}
-                required
-              />
-            </div>
-            <button type="submit" className="submit-button">Create Instructor</button>
-          </form>
+          </div>
         </div>
 
         {/* Create Project Section */}
