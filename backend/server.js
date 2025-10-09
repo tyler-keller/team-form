@@ -101,8 +101,21 @@ app.get('/api/instructors', async (req, res) => {
 // Project routes
 app.post('/api/projects', async (req, res) => {
   try {
-    const { name, description, minTeamSize, maxTeamSize, studentEmails, instructorId } = req.body;
+    const { name, description, minTeamSize, maxTeamSize, studentEmails, instructorId, courseId, courseName } = req.body;
     
+    // Ensure course: allow selecting existing by id or creating by name
+    let resolvedCourseId = null;
+    if (courseId) {
+      resolvedCourseId = parseInt(courseId);
+    } else if (courseName && courseName.trim().length > 0) {
+      const upserted = await prisma.course.upsert({
+        where: { name: courseName.trim() },
+        update: {},
+        create: { name: courseName.trim() }
+      });
+      resolvedCourseId = upserted.id;
+    }
+
     // Create the project
     const project = await prisma.project.create({
       data: {
@@ -111,7 +124,8 @@ app.post('/api/projects', async (req, res) => {
         minTeamSize,
         maxTeamSize,
         studentEmails: JSON.stringify(studentEmails),
-        instructorId: parseInt(instructorId)
+        instructorId: parseInt(instructorId),
+        courseId: resolvedCourseId || null
       }
     });
     
@@ -147,6 +161,7 @@ app.post('/api/projects', async (req, res) => {
       where: { id: project.id },
       include: {
         instructor: true,
+        course: true,
         teams: true
       }
     });
@@ -168,6 +183,7 @@ app.get('/api/projects', async (req, res) => {
     const projects = await prisma.project.findMany({
       include: {
         instructor: true,
+        course: true,
         teams: {
           include: {
             members: {
@@ -192,6 +208,7 @@ app.get('/api/projects/:id', async (req, res) => {
       where: { id: parseInt(id) },
       include: {
         instructor: true,
+        course: true,
         teams: {
           include: {
             members: {
@@ -211,6 +228,28 @@ app.get('/api/projects/:id', async (req, res) => {
     res.json(project);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch project' });
+  }
+});
+
+// Courses routes
+app.get('/api/courses', async (req, res) => {
+  try {
+    const courses = await prisma.course.findMany({ orderBy: { name: 'asc' } });
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch courses' });
+  }
+});
+
+app.post('/api/courses', async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Course name required' });
+    const course = await prisma.course.create({ data: { name: name.trim() } });
+    res.json(course);
+  } catch (error) {
+    console.error('Error creating course:', error);
+    res.status(500).json({ error: 'Failed to create course' });
   }
 });
 

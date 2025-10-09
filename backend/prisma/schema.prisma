@@ -33,6 +33,8 @@ model Project {
   
   instructorId    Int
   instructor      Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  courseId        Int?
+  course          Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
   teams           Team[]
 }
 
@@ -75,4 +77,13 @@ model TeamMember {
   team    Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   
   @@unique([studentId, teamId])
+}
+
+model Course {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  projects  Project[]
 }
