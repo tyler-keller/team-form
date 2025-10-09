@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './InstructorDashboard.css'
+import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
 const InstructorDashboard = () => {
@@ -28,9 +29,10 @@ const InstructorDashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
+      const currentEmail = localStorage.getItem('instructorEmail')
       const [instructorsRes, projectsRes, coursesRes] = await Promise.all([
         axios.get('/api/instructors'),
-        axios.get('/api/projects'),
+        axios.get('/api/projects', { params: { instructorEmail: currentEmail } }),
         axios.get('/api/courses')
       ])
       setInstructors(instructorsRes.data)
@@ -243,7 +245,7 @@ const InstructorDashboard = () => {
               {projects.map(project => (
                 <div key={project.id} className="project-card">
                   <div className="project-header">
-                    <h4>{project.name}</h4>
+                    <h4><Link to={`/project/${project.id}`}>{project.name}</Link></h4>
                     <span className="project-status">{project.status}</span>
                   </div>
                   <p className="project-description">{project.description}</p>

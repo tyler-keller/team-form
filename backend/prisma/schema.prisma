@@ -59,6 +59,7 @@ model Team {
   description String?
   maxMembers  Int      @default(4)
   teamNumber  Int?     // Team number within project (1, 2, 3, etc.)
+  locked      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

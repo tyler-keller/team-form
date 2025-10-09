@@ -180,7 +180,12 @@ app.post('/api/projects', async (req, res) => {
 
 app.get('/api/projects', async (req, res) => {
   try {
+    const { instructorEmail } = req.query;
+    const where = instructorEmail
+      ? { instructor: { email: String(instructorEmail) } }
+      : undefined;
     const projects = await prisma.project.findMany({
+      where,
       include: {
         instructor: true,
         course: true,
@@ -228,6 +233,191 @@ app.get('/api/projects/:id', async (req, res) => {
     res.json(project);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch project' });
+  }
+});
+
+// Get all students relevant to a project: invited list and assigned/available
+app.get('/api/projects/:projectId/students', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({ where: { id: parseInt(projectId) } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const invitedEmails = JSON.parse(project.studentEmails);
+    const students = await prisma.student.findMany({ where: { email: { in: invitedEmails } } });
+
+    // Determine assignments
+    const teams = await prisma.team.findMany({
+      where: { projectId: parseInt(projectId) },
+      include: { members: true }
+    });
+
+    const assignments = {};
+    teams.forEach(team => {
+      team.members.forEach(m => { assignments[m.studentId] = team.id; })
+    });
+
+    const enriched = students.map(s => ({
+      ...s,
+      teamId: assignments[s.id] || null
+    }));
+
+    res.json({
+      students: enriched,
+      teams: teams.map(t => ({ id: t.id, name: t.name, maxMembers: t.maxMembers })),
+      invitedEmails
+    });
+  } catch (error) {
+    console.error('Failed to fetch project students', error);
+    res.status(500).json({ error: 'Failed to fetch project students' });
+  }
+});
+
+// Move a student between teams (or to unassigned if teamId is null)
+app.post('/api/projects/:projectId/move-student', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { studentId, toTeamId } = req.body;
+
+    // Remove from any team in this project
+    const memberships = await prisma.teamMember.findMany({
+      where: { studentId: parseInt(studentId), team: { projectId: parseInt(projectId) } }
+    });
+    if (memberships.length > 0) {
+      await prisma.teamMember.deleteMany({ where: { id: { in: memberships.map(m => m.id) } } });
+    }
+
+    // If moving to a team, add
+    if (toTeamId) {
+      // Check team capacity
+      const team = await prisma.team.findUnique({ where: { id: parseInt(toTeamId) }, include: { members: true } });
+      if (!team) return res.status(404).json({ error: 'Team not found' });
+      if (team.members.length >= team.maxMembers) return res.status(400).json({ error: 'Team is full' });
+
+      const member = await prisma.teamMember.create({ data: { studentId: parseInt(studentId), teamId: parseInt(toTeamId) } });
+      return res.json(member);
+    }
+
+    res.json({ message: 'Student unassigned' });
+  } catch (error) {
+    console.error('Failed to move student', error);
+    res.status(500).json({ error: 'Failed to move student' });
+  }
+});
+
+// Auto-assign stragglers (students not in any team for this project)
+app.post('/api/projects/:projectId/auto-assign-stragglers', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({ where: { id: parseInt(projectId) } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const invitedEmails = JSON.parse(project.studentEmails);
+    const students = await prisma.student.findMany({ where: { email: { in: invitedEmails } } });
+    const teams = await prisma.team.findMany({ where: { projectId: parseInt(projectId) }, include: { members: true } });
+
+    const assignedIds = new Set(teams.flatMap(t => t.members.map(m => m.studentId)));
+    const unassigned = students.filter(s => !assignedIds.has(s.id));
+
+    // Fill teams greedily by capacity
+    const updates = [];
+    for (const s of unassigned) {
+      const target = teams.find(t => t.members.length < t.maxMembers);
+      if (!target) break;
+      const newMember = await prisma.teamMember.create({ data: { studentId: s.id, teamId: target.id } });
+      updates.push(newMember);
+      // Reflect local members length
+      const teamRef = teams.find(t => t.id === target.id);
+      if (teamRef) teamRef.members.push({ studentId: s.id });
+    }
+
+    res.json({ assigned: updates.length });
+  } catch (error) {
+    console.error('Failed to auto-assign stragglers', error);
+    res.status(500).json({ error: 'Failed to auto-assign stragglers' });
+  }
+});
+
+// Edit project details
+app.put('/api/projects/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { name, description, minTeamSize, maxTeamSize, status, courseId, courseName } = req.body;
+
+    let resolvedCourseId = undefined;
+    if (courseId !== undefined) {
+      resolvedCourseId = courseId === null ? null : parseInt(courseId);
+    } else if (courseName) {
+      const upserted = await prisma.course.upsert({
+        where: { name: courseName.trim() },
+        update: {},
+        create: { name: courseName.trim() }
+      });
+      resolvedCourseId = upserted.id;
+    }
+
+    const updated = await prisma.project.update({
+      where: { id: parseInt(projectId) },
+      data: {
+        name, description,
+        minTeamSize, maxTeamSize,
+        status,
+        courseId: resolvedCourseId
+      },
+      include: { instructor: true, course: true }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update project', error);
+    res.status(500).json({ error: 'Failed to update project' });
+  }
+});
+
+// Edit team details and lock
+app.put('/api/teams/:teamId/details', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { name, description, locked } = req.body;
+    const updated = await prisma.team.update({
+      where: { id: parseInt(teamId) },
+      data: { name, description, locked },
+      include: { members: { include: { student: true } }, project: true }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update team details', error);
+    res.status(500).json({ error: 'Failed to update team details' });
+  }
+});
+
+// Invite additional students to a project (append emails)
+app.post('/api/projects/:projectId/invite', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { emails } = req.body; // array of emails
+    if (!Array.isArray(emails) || emails.length === 0) return res.status(400).json({ error: 'Emails required' });
+
+    const project = await prisma.project.findUnique({ where: { id: parseInt(projectId) } });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const existing = JSON.parse(project.studentEmails);
+    const merged = Array.from(new Set([...existing, ...emails.map(e => e.trim()).filter(Boolean)]));
+
+    const updated = await prisma.project.update({ where: { id: parseInt(projectId) }, data: { studentEmails: JSON.stringify(merged) } });
+
+    // Mock email sending similar to creation
+    console.log(`📧 Sending additional invitations to ${emails.length} students for project: ${updated.name}`);
+    emails.forEach((email, idx) => {
+      console.log(`📧 Email ${idx + 1}: ${email}`);
+      console.log(`   Subject: Join Team Formation for "${updated.name}"`);
+      console.log(`   Body: Please complete your profile and join a team at: http://localhost:3000/join?project=${updated.id}&email=${encodeURIComponent(email)}`);
+      console.log(`   ---`);
+    });
+
+    res.json({ project: updated, invited: emails.length });
+  } catch (error) {
+    console.error('Failed to invite students', error);
+    res.status(500).json({ error: 'Failed to invite students' });
   }
 });
 
