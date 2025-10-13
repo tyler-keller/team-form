@@ -366,6 +366,14 @@ app.put('/api/projects/:projectId', async (req, res) => {
       },
       include: { instructor: true, course: true }
     });
+
+    // If maxTeamSize provided, propagate to all teams in this project
+    if (typeof maxTeamSize === 'number' && !Number.isNaN(maxTeamSize)) {
+      await prisma.team.updateMany({
+        where: { projectId: parseInt(projectId) },
+        data: { maxMembers: maxTeamSize }
+      });
+    }
     res.json(updated);
   } catch (error) {
     console.error('Failed to update project', error);

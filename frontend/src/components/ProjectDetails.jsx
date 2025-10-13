@@ -67,7 +67,7 @@ const ProjectDetails = () => {
     e.preventDefault()
     try {
       await axios.put(`/api/projects/${projectId}`, editProject)
-      fetchAll()
+      await fetchAll()
     } catch (e) { setError('Failed to update project') }
   }
 
@@ -200,7 +200,14 @@ const ProjectDetails = () => {
                 onBlur={() => fetchAll()}
               />
               <div className="project-details">
-                <div className="detail-item"><strong>Members:</strong> {team.members.length} / {team.maxMembers}</div>
+                <div className="detail-item">
+                  <strong>Members:</strong> {team.members.length} / {team.maxMembers}
+                  {team.members.length > team.maxMembers && (
+                    <span style={{ color: '#ffc107', marginLeft: 8 }}>
+                      Over capacity by {team.members.length - team.maxMembers}
+                    </span>
+                  )}
+                </div>
                 <div className="detail-item">
                   <button className="toggle-button" onClick={() => saveTeam(team.id, { locked: !team.locked })}>
                     {team.locked ? 'Unlock' : 'Lock'} Team
