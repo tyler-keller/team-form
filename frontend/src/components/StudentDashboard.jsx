@@ -284,16 +284,22 @@ const StudentDashboard = () => {
             <h4>Student Profile</h4>
             <div style={{ display: 'grid', gap: 8 }}>
               <div>
-                <strong>Major:</strong> {profileStudent.major || '—'}
+                <strong>Name:</strong> {profileStudent.name || '\u2014'}
               </div>
               <div>
-                <strong>Year:</strong> {profileStudent.year || '—'}
+                <strong>Email:</strong> {profileStudent.email || '\u2014'}
               </div>
               <div>
-                <strong>Skills:</strong> {profileStudent.skills ? (() => { try { const arr = JSON.parse(profileStudent.skills); return Array.isArray(arr) ? arr.join(', ') : String(profileStudent.skills); } catch { return String(profileStudent.skills); } })() : '—'}
+                <strong>Major:</strong> {profileStudent.major || '\u2014'}
               </div>
               <div>
-                <strong>Interests:</strong> {profileStudent.interests || '—'}
+                <strong>Year:</strong> {profileStudent.year || '\u2014'}
+              </div>
+              <div>
+                <strong>Skills:</strong> {profileStudent.skills ? (() => { try { const arr = JSON.parse(profileStudent.skills); return Array.isArray(arr) ? arr.join(', ') : String(profileStudent.skills); } catch { return String(profileStudent.skills); } })() : '\u2014'}
+              </div>
+              <div>
+                <strong>Interests:</strong> {profileStudent.interests || '\u2014'}
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
