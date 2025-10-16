@@ -20,33 +20,36 @@ const StudentProfileForm = ({ onSuccess }) => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Only prefill if editing profile
+    // Prefill email from localStorage for both create and edit flows
+    const emailFromStorage = localStorage.getItem('studentEmail')
+    if (emailFromStorage) {
+      setFormData(prev => ({ ...prev, email: emailFromStorage }))
+    }
+
+    // Only prefill full data if editing profile
     const editing = window.location.pathname === '/edit-profile'
     setIsEditMode(editing)
-    if (editing) {
-      const email = localStorage.getItem('studentEmail');
-      if (email) {
-        setLoading(true);
-        fetch(`/api/students`)
-          .then(res => res.json())
-          .then(students => {
-            const student = students.find(s => s.email === email);
-            if (student) {
-              setStudentId(student.id)
-              setFormData({
-                name: student.name || '',
-                email: student.email || '',
-                major: student.major || '',
-                year: student.year || '',
-                skills: Array.isArray(student.skills) ? student.skills.join(', ') : (student.skills ? JSON.parse(student.skills).join(', ') : ''),
-                interests: student.interests || '',
-                availability: student.availability ? JSON.parse(student.availability) : {}
-              });
-            }
-          })
-          .catch(() => {})
-          .finally(() => setLoading(false));
-      }
+    if (editing && emailFromStorage) {
+      setLoading(true);
+      fetch(`/api/students`)
+        .then(res => res.json())
+        .then(students => {
+          const student = students.find(s => s.email === emailFromStorage);
+          if (student) {
+            setStudentId(student.id)
+            setFormData({
+              name: student.name || '',
+              email: student.email || '',
+              major: student.major || '',
+              year: student.year || '',
+              skills: Array.isArray(student.skills) ? student.skills.join(', ') : (student.skills ? JSON.parse(student.skills).join(', ') : ''),
+              interests: student.interests || '',
+              availability: student.availability ? JSON.parse(student.availability) : {}
+            });
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
     }
   }, []);
 
@@ -113,6 +116,7 @@ const StudentProfileForm = ({ onSuccess }) => {
       if (!isEditMode) {
         localStorage.setItem('studentSignedUp', 'true');
         localStorage.setItem('studentEmail', formData.email);
+        navigate('/student-dashboard')
       }
       
       // Reset form
@@ -158,7 +162,7 @@ const StudentProfileForm = ({ onSuccess }) => {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            readOnly={isEditMode}
+            readOnly
             required
           />
         </div>

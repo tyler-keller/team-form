@@ -19,6 +19,8 @@ const StudentEmailInput = () => {
         localStorage.setItem('studentEmail', email);
         navigate('/student-dashboard');
       } else {
+        // Carry the email over for profile creation
+        localStorage.setItem('studentEmail', email);
         navigate('/student');
       }
     } catch (err) {
