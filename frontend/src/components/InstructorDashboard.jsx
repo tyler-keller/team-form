@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './InstructorDashboard.css'
+import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const InstructorDashboard = () => {
+  const navigate = useNavigate()
   const [instructors, setInstructors] = useState([])
   const [projects, setProjects] = useState([])
+  const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateProject, setShowCreateProject] = useState(false)
-  const [newInstructor, setNewInstructor] = useState({ name: '', email: '' })
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
     minTeamSize: 3,
     maxTeamSize: 4,
     studentEmails: '',
-    instructorId: ''
+    courseId: '',
+    courseName: ''
   })
 
   useEffect(() => {
@@ -25,12 +29,15 @@ const InstructorDashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [instructorsRes, projectsRes] = await Promise.all([
+      const currentEmail = localStorage.getItem('instructorEmail')
+      const [instructorsRes, projectsRes, coursesRes] = await Promise.all([
         axios.get('/api/instructors'),
-        axios.get('/api/projects')
+        axios.get('/api/projects', { params: { instructorEmail: currentEmail } }),
+        axios.get('/api/courses')
       ])
       setInstructors(instructorsRes.data)
       setProjects(projectsRes.data)
+      setCourses(coursesRes.data)
     } catch (error) {
       console.error('Error fetching data:', error)
       setError('Failed to fetch data')
@@ -39,17 +46,15 @@ const InstructorDashboard = () => {
     }
   }
 
-  const handleCreateInstructor = async (e) => {
-    e.preventDefault()
-    try {
-      await axios.post('/api/instructors', newInstructor)
-      setNewInstructor({ name: '', email: '' })
-      fetchData()
-    } catch (error) {
-      console.error('Error creating instructor:', error)
-      setError('Failed to create instructor')
+  // Ensure we have an instructor context; otherwise send to entry page
+  useEffect(() => {
+    const email = localStorage.getItem('instructorEmail')
+    if (!email) {
+      navigate('/instructor-entry')
     }
-  }
+  }, [navigate])
+
+  
 
   const handleCreateProject = async (e) => {
     e.preventDefault()
@@ -59,10 +64,20 @@ const InstructorDashboard = () => {
         .map(email => email.trim())
         .filter(email => email.length > 0)
       
+      // Resolve instructor from localStorage (current context)
+      const instructorEmail = localStorage.getItem('instructorEmail')
+      const instructor = instructors.find(i => i.email === instructorEmail)
+      if (!instructor) {
+        setError('Instructor not found. Please select/switch instructor again.')
+        return
+      }
+
       const response = await axios.post('/api/projects', {
         ...newProject,
         studentEmails,
-        instructorId: parseInt(newProject.instructorId)
+        instructorId: instructor.id,
+        courseId: newProject.courseId ? parseInt(newProject.courseId) : undefined,
+        courseName: newProject.courseId ? undefined : (newProject.courseName || undefined)
       })
       
       setNewProject({
@@ -71,7 +86,8 @@ const InstructorDashboard = () => {
         minTeamSize: 3,
         maxTeamSize: 4,
         studentEmails: '',
-        instructorId: ''
+        courseId: '',
+        courseName: ''
       })
       setShowCreateProject(false)
       fetchData()
@@ -99,32 +115,15 @@ const InstructorDashboard = () => {
       {error && <div className="error-message">{error}</div>}
       
       <div className="dashboard-sections">
-        {/* Create Instructor Section */}
+        {/* Instructor context info */}
         <div className="section">
-          <h3>Create Instructor</h3>
-          <form onSubmit={handleCreateInstructor} className="instructor-form">
-            <div className="form-group">
-              <label htmlFor="instructorName">Name</label>
-              <input
-                type="text"
-                id="instructorName"
-                value={newInstructor.name}
-                onChange={(e) => setNewInstructor({ ...newInstructor, name: e.target.value })}
-                required
-              />
+          <h3>Instructor</h3>
+          <div>
+            Using: {localStorage.getItem('instructorEmail') || 'Unknown'}
+            <div style={{ marginTop: '0.5rem' }}>
+              <button className="toggle-button" onClick={() => navigate('/instructor-entry')}>Switch Instructor</button>
             </div>
-            <div className="form-group">
-              <label htmlFor="instructorEmail">Email</label>
-              <input
-                type="email"
-                id="instructorEmail"
-                value={newInstructor.email}
-                onChange={(e) => setNewInstructor({ ...newInstructor, email: e.target.value })}
-                required
-              />
-            </div>
-            <button type="submit" className="submit-button">Create Instructor</button>
-          </form>
+          </div>
         </div>
 
         {/* Create Project Section */}
@@ -189,22 +188,35 @@ const InstructorDashboard = () => {
                 </div>
               </div>
               
+              {/* Instructor is derived from current context (localStorage) */}
+
               <div className="form-group">
-                <label htmlFor="instructorSelect">Instructor</label>
+                <label htmlFor="courseSelect">Course</label>
                 <select
-                  id="instructorSelect"
-                  value={newProject.instructorId}
-                  onChange={(e) => setNewProject({ ...newProject, instructorId: e.target.value })}
-                  required
+                  id="courseSelect"
+                  value={newProject.courseId || ''}
+                  onChange={(e) => setNewProject({ ...newProject, courseId: e.target.value, courseName: '' })}
                 >
-                  <option value="">Select Instructor</option>
-                  {instructors.map(instructor => (
-                    <option key={instructor.id} value={instructor.id}>
-                      {instructor.name} ({instructor.email})
-                    </option>
+                  <option value="">Create New Course…</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>{course.name}</option>
                   ))}
                 </select>
               </div>
+
+              {!newProject.courseId && (
+                <div className="form-group">
+                  <label htmlFor="courseName">New Course Name</label>
+                  <input
+                    type="text"
+                    id="courseName"
+                    value={newProject.courseName}
+                    onChange={(e) => setNewProject({ ...newProject, courseName: e.target.value })}
+                    placeholder="e.g., CS101 - Fall 2025"
+                    required
+                  />
+                </div>
+              )}
               
               <div className="form-group">
                 <label htmlFor="studentEmails">Student Emails (one per line)</label>
@@ -233,7 +245,7 @@ const InstructorDashboard = () => {
               {projects.map(project => (
                 <div key={project.id} className="project-card">
                   <div className="project-header">
-                    <h4>{project.name}</h4>
+                    <h4><Link to={`/project/${project.id}`}>{project.name}</Link></h4>
                     <span className="project-status">{project.status}</span>
                   </div>
                   <p className="project-description">{project.description}</p>
@@ -241,6 +253,11 @@ const InstructorDashboard = () => {
                     <div className="detail-item">
                       <strong>Instructor:</strong> {project.instructor.name}
                     </div>
+                    {project.course && (
+                      <div className="detail-item">
+                        <strong>Course:</strong> {project.course.name}
+                      </div>
+                    )}
                     <div className="detail-item">
                       <strong>Team Size:</strong> {project.minTeamSize}-{project.maxTeamSize} members
                     </div>
