@@ -78,6 +78,8 @@ const ProjectDetails = () => {
     } catch (e) { setError('Failed to update team') }
   }
 
+  const [profileStudent, setProfileStudent] = useState(null)
+
   const inviteStudents = async (emailsText) => {
     const emails = emailsText.split('\n').map(e => e.trim()).filter(Boolean)
     if (emails.length === 0) return
@@ -217,7 +219,13 @@ const ProjectDetails = () => {
               <div className="students-list">
                 {team.members.map(m => (
                   <div key={m.id} className="student-card">
-                    <div className="student-name">{m.student.name || m.student.email}</div>
+                    <button
+                      className="student-name"
+                      style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer' }}
+                      onClick={() => setProfileStudent(m.student)}
+                    >
+                      {m.student.name || m.student.email}
+                    </button>
                     <div className="student-actions">
                       <button className="toggle-button" onClick={() => moveStudent(m.student.id, null)}>Unassign</button>
                       {project.teams.filter(t => t.id !== team.id).map(t => (
@@ -231,6 +239,30 @@ const ProjectDetails = () => {
           ))}
         </div>
       </div>
+      {profileStudent && (
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal" style={{ background: '#fff', padding: 16, borderRadius: 8, width: 'min(520px, 92vw)' }}>
+            <h4>Student Profile</h4>
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div>
+                <strong>Major:</strong> {profileStudent.major || '—'}
+              </div>
+              <div>
+                <strong>Year:</strong> {profileStudent.year || '—'}
+              </div>
+              <div>
+                <strong>Skills:</strong> {profileStudent.skills ? (() => { try { const arr = JSON.parse(profileStudent.skills); return Array.isArray(arr) ? arr.join(', ') : String(profileStudent.skills); } catch { return String(profileStudent.skills); } })() : '—'}
+              </div>
+              <div>
+                <strong>Interests:</strong> {profileStudent.interests || '—'}
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+              <button onClick={() => setProfileStudent(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

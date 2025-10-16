@@ -139,7 +139,7 @@ app.post('/api/projects', async (req, res) => {
       const team = await prisma.team.create({
         data: {
           name: `Team ${i}`,
-          description: `Auto-created team for ${project.name}`,
+          description: '',
           maxMembers: maxTeamSize,
           teamNumber: i,
           projectId: project.id
@@ -544,24 +544,60 @@ app.post('/api/teams/:teamId/members', async (req, res) => {
 app.put('/api/teams/:teamId', async (req, res) => {
   try {
     const { teamId } = req.params;
-    const { name, description } = req.body;
-    
+    const { name, description, maxMembers } = req.body;
+
+    // Load team with current members and project constraints
+    const existing = await prisma.team.findUnique({
+      where: { id: parseInt(teamId) },
+      include: { members: true, project: true }
+    });
+    if (!existing) return res.status(404).json({ error: 'Team not found' });
+
+    const currentMemberCount = existing.members.length;
+
+    // Validate maxMembers if provided (could be 0/undefined)
+    let validatedMaxMembers = undefined;
+    if (maxMembers !== undefined) {
+      const proposed = parseInt(maxMembers);
+      if (Number.isNaN(proposed) || proposed <= 0) {
+        return res.status(400).json({ error: 'Invalid team size' });
+      }
+
+      // Enforce bounds: project min/max if associated
+      if (existing.project) {
+        const minAllowed = existing.project.minTeamSize;
+        const maxAllowed = existing.project.maxTeamSize;
+        if (proposed < minAllowed) {
+          return res.status(400).json({ error: `Team size cannot be less than project minimum (${minAllowed})` });
+        }
+        if (proposed > maxAllowed) {
+          return res.status(400).json({ error: `Team size cannot exceed project maximum (${maxAllowed})` });
+        }
+      }
+
+      // Must accommodate current members
+      if (proposed < currentMemberCount) {
+        return res.status(400).json({ error: `Team size cannot be less than current members (${currentMemberCount})` });
+      }
+
+      validatedMaxMembers = proposed;
+    }
+
+    const data = {
+      ...(name !== undefined ? { name } : {}),
+      ...(description !== undefined ? { description } : {}),
+      ...(validatedMaxMembers !== undefined ? { maxMembers: validatedMaxMembers } : {})
+    };
+
     const team = await prisma.team.update({
       where: { id: parseInt(teamId) },
-      data: {
-        name,
-        description
-      },
+      data,
       include: {
-        members: {
-          include: {
-            student: true
-          }
-        },
+        members: { include: { student: true } },
         project: true
       }
     });
-    
+
     res.json(team);
   } catch (error) {
     console.error('Error updating team:', error);
@@ -641,7 +677,7 @@ app.post('/api/teams/auto-generate', async (req, res) => {
       const teamData = await prisma.team.create({
         data: {
           name: team.name,
-          description: team.description
+          description: ''
         }
       });
       
