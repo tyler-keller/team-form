@@ -59,6 +59,34 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
+// Update an existing student profile by id
+app.put('/api/students/:studentId', async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { name, major, year, skills, availability, interests } = req.body;
+
+    const existing = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+    if (!existing) return res.status(404).json({ error: 'Student not found' });
+
+    const updated = await prisma.student.update({
+      where: { id: parseInt(studentId) },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(major !== undefined ? { major } : {}),
+        ...(year !== undefined ? { year } : {}),
+        ...(skills !== undefined ? { skills: skills ? JSON.stringify(skills) : null } : {}),
+        ...(availability !== undefined ? { availability: availability ? JSON.stringify(availability) : null } : {}),
+        ...(interests !== undefined ? { interests } : {})
+      }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating student:', error);
+    res.status(500).json({ error: 'Failed to update student' });
+  }
+});
+
 // Instructor routes
 app.post('/api/instructors', async (req, res) => {
   try {

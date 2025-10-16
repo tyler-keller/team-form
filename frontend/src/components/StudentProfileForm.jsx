@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import './StudentProfileForm.css'
 
@@ -14,10 +15,15 @@ const StudentProfileForm = ({ onSuccess }) => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [studentId, setStudentId] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     // Only prefill if editing profile
-    if (window.location.pathname === '/edit-profile') {
+    const editing = window.location.pathname === '/edit-profile'
+    setIsEditMode(editing)
+    if (editing) {
       const email = localStorage.getItem('studentEmail');
       if (email) {
         setLoading(true);
@@ -26,6 +32,7 @@ const StudentProfileForm = ({ onSuccess }) => {
           .then(students => {
             const student = students.find(s => s.email === email);
             if (student) {
+              setStudentId(student.id)
               setFormData({
                 name: student.name || '',
                 email: student.email || '',
@@ -89,14 +96,24 @@ const StudentProfileForm = ({ onSuccess }) => {
         availability: formData.availability
       }
 
-      const response = await axios.post('/api/students', studentData)
+      let response
+      if (isEditMode && studentId) {
+        response = await axios.put(`/api/students/${studentId}`, studentData)
+      } else {
+        response = await axios.post('/api/students', studentData)
+      }
       
       if (onSuccess) {
         onSuccess(response.data)
       }
-  // Mark student as signed up and store email
-  localStorage.setItem('studentSignedUp', 'true');
-  localStorage.setItem('studentEmail', formData.email);
+      if (isEditMode) {
+        navigate('/student-dashboard')
+      }
+      // Mark student as signed up and store email only on create
+      if (!isEditMode) {
+        localStorage.setItem('studentSignedUp', 'true');
+        localStorage.setItem('studentEmail', formData.email);
+      }
       
       // Reset form
       setFormData({
@@ -141,6 +158,7 @@ const StudentProfileForm = ({ onSuccess }) => {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
+            readOnly={isEditMode}
             required
           />
         </div>
@@ -230,7 +248,7 @@ const StudentProfileForm = ({ onSuccess }) => {
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading} className="submit-button">
-          {loading ? 'Creating Profile...' : 'Create Profile'}
+          {loading ? (isEditMode ? 'Updating Profile...' : 'Creating Profile...') : (isEditMode ? 'Update Profile' : 'Create Profile')}
         </button>
       </form>
     </div>
