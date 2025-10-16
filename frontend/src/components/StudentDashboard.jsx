@@ -33,12 +33,21 @@ const StudentDashboard = () => {
       const currentStudent = (studentsResponse.data || []).find(s => s.email === email) || null;
       setStudent(currentStudent || null);
 
-      // Show only projects the student is already in, but include full team details
-      const filtered = (projectsResponse.data || []).filter(project =>
-        project.teams?.some(team =>
-          team.members?.some(member => member.student?.email === email)
-        )
-      );
+      // Show projects where the student is either already in a team OR invited by email
+      const filtered = (projectsResponse.data || []).filter(project => {
+        const isMember = (project.teams || []).some(team =>
+          (team.members || []).some(member => member.student?.email === email)
+        );
+        if (isMember) return true;
+        // Check invited list; backend stores studentEmails as a JSON string
+        let invited = [];
+        try {
+          if (project.studentEmails) invited = JSON.parse(project.studentEmails);
+        } catch (_) {
+          invited = [];
+        }
+        return Array.isArray(invited) && invited.includes(email);
+      });
       setProjects(filtered);
     } catch (err) {
       setError('Failed to load dashboard');
