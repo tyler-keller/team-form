@@ -258,6 +258,7 @@
   padding: 2rem;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #000; /* ensure modal text is black */
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
@@ -265,8 +266,14 @@
 }
 
 .modal h3 {
-  color: #f0f0f0;
+  color: #000;
   margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.modal h4 {
+  color: #000;
+  margin-bottom: 1rem;
   text-align: center;
 }
 
@@ -281,6 +288,11 @@
   margin-bottom: 0.5rem;
 }
 
+/* override form label colors inside modal dialogs */
+.modal .form-group label {
+  color: #000;
+}
+
 .form-group input,
 .form-group textarea {
   width: 100%;
@@ -291,6 +303,12 @@
   color: #f0f0f0;
   font-size: 1rem;
   transition: all 0.3s ease;
+}
+
+/* ensure inputs inside modal are readable when modal background is white */
+.modal .form-group input,
+.modal .form-group textarea {
+  color: #000;
 }
 
 .form-group input:focus,
@@ -322,6 +340,13 @@
   background: rgba(255, 255, 255, 0.2);
   color: #f0f0f0;
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* cancel/save buttons inside modal should be readable on white */
+.modal .cancel-button {
+  color: #000;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.08);
 }
 
 .cancel-button:hover {
