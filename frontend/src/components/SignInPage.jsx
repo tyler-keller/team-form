@@ -5,6 +5,9 @@ import './SignInPage.css';
 const SignInPage = () => {
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState('student');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   return (
     <div className="signin-container">
@@ -25,23 +28,49 @@ const SignInPage = () => {
           Student Sign In
         </button>
       </div>
-      <form className="signin-form" onSubmit={e => e.preventDefault()}>
+      <form className="signin-form" onSubmit={async e => {
+        e.preventDefault();
+        setError('');
+        try {
+          const res = await fetch('http://localhost:3001/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: selectedRole, email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Login failed');
+          localStorage.setItem('token', data.token);
+          // Redirect based on role
+          if (selectedRole === 'instructor') {
+            navigate('/instructor');
+          } else {
+            navigate('/student-dashboard');
+          }
+        } catch (err) {
+          setError(err.message);
+        }
+      }}>
         <input
           type="email"
           placeholder="Email"
           className="signin-input"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
           required
         />
         <input
           type="password"
           placeholder="Password"
           className="signin-input"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
           required
         />
         <button type="submit" className="signin-btn" style={{marginTop: '1.5rem'}}>
           Sign In
         </button>
       </form>
+      {error && <div style={{color:'red',marginTop:'1rem'}}>{error}</div>}
       <div className="signup-link-container">
         <button
           className="signup-link"

@@ -1,3 +1,29 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { registerUser, loginUser } = require('./auth');
+// Register endpoint
+app.post('/api/register', async (req, res) => {
+  try {
+    const { type, email, password } = req.body;
+    if (!type || !email || !password) return res.status(400).json({ error: 'Missing fields' });
+    const user = await registerUser(type, email, password);
+    res.json({ message: 'User registered', user });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Login endpoint
+app.post('/api/login', async (req, res) => {
+  try {
+    const { type, email, password } = req.body;
+    if (!type || !email || !password) return res.status(400).json({ error: 'Missing fields' });
+    const { token, user } = await loginUser(type, email, password);
+    res.json({ token, user });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+});
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
