@@ -12,7 +12,8 @@ datasource db {
 
 model Instructor {
   id        Int      @id @default(autoincrement())
-  name      String
+  name      String?
+  password  String?
   email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

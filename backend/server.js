@@ -1,6 +1,17 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+
+const express = require('express');
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
 const { registerUser, loginUser } = require('./auth');
+
+const app = express();
+const prisma = new PrismaClient();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
 // Register endpoint
 app.post('/api/register', async (req, res) => {
   try {
@@ -24,17 +35,6 @@ app.post('/api/login', async (req, res) => {
     res.status(401).json({ error: error.message });
   }
 });
-const express = require('express');
-const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
-
-const app = express();
-const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3001;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
 
 // Hello world route
 app.get('/api/hello', (req, res) => {
