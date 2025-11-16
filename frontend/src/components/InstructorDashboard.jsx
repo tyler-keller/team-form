@@ -5,6 +5,10 @@ import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
 const InstructorDashboard = () => {
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/');
+  };
   const navigate = useNavigate()
   const [instructors, setInstructors] = useState([])
   const [projects, setProjects] = useState([])
@@ -50,7 +54,7 @@ const InstructorDashboard = () => {
   useEffect(() => {
     const email = localStorage.getItem('instructorEmail')
     if (!email) {
-      navigate('/instructor-entry')
+  navigate('/instructor')
     }
   }, [navigate])
 
@@ -110,6 +114,9 @@ const InstructorDashboard = () => {
 
   return (
     <div className="instructor-dashboard">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+        <button onClick={handleLogout} style={{ padding: '0.5rem 1.2rem', borderRadius: '1rem', background: '#1976d2', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem' }}>Logout</button>
+      </div>
       <h2>Instructor Dashboard</h2>
       
       {error && <div className="error-message">{error}</div>}
@@ -121,7 +128,7 @@ const InstructorDashboard = () => {
           <div>
             Using: {localStorage.getItem('instructorEmail') || 'Unknown'}
             <div style={{ marginTop: '0.5rem' }}>
-              <button className="toggle-button" onClick={() => navigate('/instructor-entry')}>Switch Instructor</button>
+              <button className="toggle-button" onClick={() => navigate('/instructor')}>Switch Instructor</button>
             </div>
           </div>
         </div>

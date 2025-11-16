@@ -2,6 +2,8 @@
 import { Routes, Route } from 'react-router-dom';
 
 import LandingPage from './components/LandingPage';
+import SignInPage from './components/SignInPage';
+import RegistrationPage from './components/RegistrationPage';
 import InstructorDashboard from './components/InstructorDashboard';
 import ProjectDetails from './components/ProjectDetails';
 import InstructorEntry from './components/InstructorEntry';
@@ -21,7 +23,9 @@ function App() {
     <div className="app">
       <Routes>
   <Route path="/" element={<LandingPage />} />
-  <Route path="/instructor-entry" element={<InstructorEntry />} />
+  <Route path="/sign-in" element={<SignInPage />} />
+  <Route path="/register/instructor" element={<RegistrationPage userType="instructor" />} />
+  <Route path="/register/student" element={<RegistrationPage userType="student" />} />
   <Route path="/instructor" element={<InstructorDashboard />} />
   <Route path="/project/:projectId" element={<ProjectDetails />} />
   <Route path="/student" element={<StudentProfileForm />} />

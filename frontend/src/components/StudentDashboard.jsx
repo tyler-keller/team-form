@@ -166,6 +166,9 @@ const StudentDashboard = () => {
 
   return (
     <div className="student-dashboard">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+        <button onClick={() => { localStorage.clear(); navigate('/'); }} style={{ padding: '0.5rem 1.2rem', borderRadius: '1rem', background: '#1976d2', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem', marginRight: '1rem' }}>Logout</button>
+      </div>
       <h2>Student Dashboard</h2>
       <button onClick={() => navigate('/edit-profile')} className="edit-profile-btn">Edit Profile</button>
       <h3>Your Projects</h3>
