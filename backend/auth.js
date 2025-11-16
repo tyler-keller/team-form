@@ -6,12 +6,19 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
 async function registerUser(type, email, password) {
   const hashedPassword = await bcrypt.hash(password, 10);
-  if (type === 'student') {
-    return prisma.student.create({ data: { email, password: hashedPassword } });
-  } else if (type === 'instructor') {
-    return prisma.instructor.create({ data: { email, password: hashedPassword } });
+  try {
+    if (type === 'student') {
+      return await prisma.student.create({ data: { email, password: hashedPassword } });
+    } else if (type === 'instructor') {
+      return await prisma.instructor.create({ data: { email, password: hashedPassword } });
+    }
+    throw new Error('Invalid user type');
+  } catch (err) {
+    if (err.code === 'P2002' && err.meta?.target?.includes('email')) {
+      throw new Error('Email already registered');
+    }
+    throw err;
   }
-  throw new Error('Invalid user type');
 }
 
 async function loginUser(type, email, password) {

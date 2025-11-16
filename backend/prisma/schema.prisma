@@ -41,8 +41,9 @@ model Project {
 
 model Student {
   id          Int      @id @default(autoincrement())
-  name        String
+  name        String?
   email       String   @unique
+  password    String?
   major       String?
   year        String?
   skills      String?  // Store as JSON string for SQLite compatibility

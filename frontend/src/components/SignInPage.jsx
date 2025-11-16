@@ -12,22 +12,21 @@ const SignInPage = () => {
   return (
     <div className="signin-container">
       <h2>Sign In</h2>
-      <div className="signin-options">
-        <button
-          className={`signin-btn${selectedRole === 'instructor' ? ' selected' : ''}`}
-          onClick={() => setSelectedRole('instructor')}
-          type="button"
-        >
-          Instructor Sign In
-        </button>
-        <button
-          className={`signin-btn${selectedRole === 'student' ? ' selected' : ''}`}
-          onClick={() => setSelectedRole('student')}
-          type="button"
-        >
-          Student Sign In
-        </button>
-      </div>
+    <div className="signin-options" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem' }}>
+      <label htmlFor="role-select" style={{ marginBottom: '0.75rem', fontWeight: 'bold', textAlign: 'center', width: '100%' }}>
+        Select a Role
+      </label>
+      <select
+        id="role-select"
+        className="signin-input"
+        value={selectedRole}
+        onChange={e => setSelectedRole(e.target.value)}
+        style={{ marginBottom: '1rem', textAlign: 'center' }}
+      >
+        <option value="student">Student</option>
+        <option value="instructor">Instructor</option>
+      </select>
+    </div>
       <form className="signin-form" onSubmit={async e => {
         e.preventDefault();
         setError('');
@@ -40,6 +39,8 @@ const SignInPage = () => {
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Login failed');
           localStorage.setItem('token', data.token);
+          setEmail('');
+          setPassword('');
           // Redirect based on role
           if (selectedRole === 'instructor') {
             navigate('/instructor');
@@ -70,21 +71,29 @@ const SignInPage = () => {
           Sign In
         </button>
       </form>
-      {error && <div style={{color:'red',marginTop:'1rem'}}>{error}</div>}
-      <div className="signup-link-container">
+      {error && (
+        <div
+          style={{
+            backgroundColor: '#dc3545',
+            color: 'white',
+            borderRadius: '1rem',
+            padding: '0.75rem 1.5rem',
+            marginTop: '1rem',
+            display: 'inline-block',
+            fontWeight: 'bold',
+            fontSize: '1rem'
+          }}
+        >
+          Invalid username or password
+        </div>
+      )}
+      <div className="signup-link-container" style={{ marginTop: '1.5rem' }}>
         <button
           className="signup-link"
           type="button"
-          onClick={() => navigate('/register/instructor')}
+          onClick={() => navigate(`/register/${selectedRole}`)}
         >
-          Instructor Sign Up
-        </button>
-        <button
-          className="signup-link"
-          type="button"
-          onClick={() => navigate('/register/student')}
-        >
-          Student Sign Up
+          Sign Up
         </button>
       </div>
     </div>

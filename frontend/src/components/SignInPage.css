@@ -70,6 +70,8 @@
   border-radius: 6px;
   border: 1px solid #ccc;
   outline: none;
+  width: 100%;
+  max-width: 350px;
 }
 .signin-input:focus {
   border-color: #1976d2;
