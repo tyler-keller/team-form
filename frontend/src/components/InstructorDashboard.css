@@ -141,11 +141,11 @@
   border-radius: 10px;
   padding: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Removed transition and transform to fix DnD positioning issues */
 }
 
 .project-card:hover {
-  transform: translateY(-2px);
+  /* Removed transform to fix DnD positioning issues */
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
@@ -229,6 +229,21 @@
 .team-members {
   color: rgba(240, 240, 240, 0.7);
   font-size: 0.8rem;
+}
+
+button.student-name {
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  color: #f0f0f0;
+  width: fit-content;
+  font-size: 1rem;
+}
+
+button.student-name:hover {
+  text-decoration: underline;
 }
 
 /* Responsive design */
