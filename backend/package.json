@@ -8,7 +8,11 @@
     "dev": "nodemon server.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "seed": "node scripts/seed.js",
+    "quick-setup": "node scripts/quick-setup.js",
+    "cli": "node scripts/cli.js",
+    "db:reset": "rm -f prisma/dev.db && npm run db:push && npm run seed"
   },
   "dependencies": {
     "express": "^4.18.2",

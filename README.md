@@ -170,6 +170,45 @@ The application uses the following main entities:
 
 ## Development Tools
 
+### Quick Data Setup (NEW! 🎉)
+
+Instead of manually creating instructors, projects, and students through the web app, use our developer tools:
+
+**Fast Setup (Recommended for first-time setup):**
+```bash
+cd backend
+npm run quick-setup
+```
+Creates 1 instructor, 1 course, 1 project, and 12 students instantly.
+
+**Full Sample Data (For testing at scale):**
+```bash
+cd backend
+npm run seed
+```
+Creates 4 instructors, 5 courses, 4 projects, and 50 students with diverse profiles.
+
+**Interactive CLI (For custom scenarios):**
+```bash
+cd backend
+npm run cli
+```
+Interactive menu for creating instructors, courses, projects, and students with full control.
+
+**Quick Reference:**
+```bash
+npm run quick-setup    # Fast setup with sample data
+npm run seed          # Full seed (⚠️ clears existing data)
+npm run cli           # Interactive data creation
+npm run db:studio     # Visual database browser
+npm run db:reset      # Delete all & reseed
+```
+
+📖 **Full Documentation**: See [DEVELOPER_TOOLING.md](./DEVELOPER_TOOLING.md) for complete guide.  
+📝 **Quick Reference**: See [backend/QUICK_REFERENCE.md](./backend/QUICK_REFERENCE.md) for one-line commands.
+
+### Other Tools
+
 - **Database Studio**: `npm run db:studio` - Opens Prisma Studio for database management
 - **Database Reset**: `npm run db:setup` - Regenerates Prisma client and pushes schema
 
