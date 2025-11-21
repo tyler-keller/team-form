@@ -142,3 +142,10 @@
 .nav-button.active:hover {
   background: #45a049;
 }
+
+/* Responsive styles for Student Dashboard project content */
+@media (max-width: 968px) {
+  .project-content-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

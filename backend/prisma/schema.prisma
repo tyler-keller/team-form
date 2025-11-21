@@ -51,6 +51,8 @@ model Student {
   updatedAt   DateTime @updatedAt
   
   teamMemberships TeamMember[]
+  invitations     TeamInvitation[] @relation("Invitations")
+  sentInvitations TeamInvitation[] @relation("SentInvitations")
 }
 
 model Team {
@@ -66,6 +68,7 @@ model Team {
   projectId   Int?
   project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   members     TeamMember[]
+  invitations TeamInvitation[]
 }
 
 model TeamMember {
@@ -78,6 +81,23 @@ model TeamMember {
   team    Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   
   @@unique([studentId, teamId])
+}
+
+model TeamInvitation {
+  id        Int      @id @default(autoincrement())
+  teamId    Int
+  studentId Int      // The student being invited
+  inviterId Int      // The student who sent the invitation
+  status    String   @default("pending") // pending, accepted, rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  team    Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  student Student @relation("Invitations", fields: [studentId], references: [id], onDelete: Cascade)
+  inviter Student @relation("SentInvitations", fields: [inviterId], references: [id], onDelete: Cascade)
+  
+  @@unique([teamId, studentId, status])
+  @@index([studentId, status])
 }
 
 model Course {

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import './StudentProfileForm.css'
 
 const StudentProfileForm = ({ onSuccess }) => {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,10 +16,13 @@ const StudentProfileForm = ({ onSuccess }) => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isEditMode, setIsEditMode] = useState(false)
 
   useEffect(() => {
     // Only prefill if editing profile
     if (window.location.pathname === '/edit-profile') {
+      setIsEditMode(true);
       const email = localStorage.getItem('studentEmail');
       if (email) {
         setLoading(true);
@@ -84,34 +89,56 @@ const StudentProfileForm = ({ onSuccess }) => {
         .filter(skill => skill.length > 0)
 
       const studentData = {
-        ...formData,
+        name: formData.name,
+        major: formData.major,
+        year: formData.year,
         skills: skillsArray,
-        availability: formData.availability
+        availability: formData.availability,
+        interests: formData.interests
       }
 
-      const response = await axios.post('/api/students', studentData)
+      let response;
+      if (isEditMode) {
+        // Update existing student
+        response = await axios.put(`/api/students/${encodeURIComponent(formData.email)}`, studentData)
+      } else {
+        // Create new student
+        response = await axios.post('/api/students', {
+          ...studentData,
+          email: formData.email
+        })
+        // Mark student as signed up and store email
+        localStorage.setItem('studentSignedUp', 'true');
+        localStorage.setItem('studentEmail', formData.email);
+      }
       
       if (onSuccess) {
         onSuccess(response.data)
       }
-  // Mark student as signed up and store email
-  localStorage.setItem('studentSignedUp', 'true');
-  localStorage.setItem('studentEmail', formData.email);
       
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        major: '',
-        year: '',
-        skills: '',
-        interests: '',
-        availability: {}
-      })
+      // Only reset form if creating new profile, not when editing
+      if (!isEditMode) {
+        setFormData({
+          name: '',
+          email: '',
+          major: '',
+          year: '',
+          skills: '',
+          interests: '',
+          availability: {}
+        })
+      } else {
+        // Show success message and navigate back to dashboard after a short delay
+        setError('')
+        setSuccessMessage('Profile updated successfully!')
+        setTimeout(() => {
+          navigate('/student-dashboard')
+        }, 1500)
+      }
       
     } catch (error) {
-      console.error('Error creating student:', error)
-      setError('Failed to create student profile. Please try again.')
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} student:`, error)
+      setError(`Failed to ${isEditMode ? 'update' : 'create'} student profile. Please try again.`)
     } finally {
       setLoading(false)
     }
@@ -119,7 +146,7 @@ const StudentProfileForm = ({ onSuccess }) => {
 
   return (
     <div className="student-profile-form">
-      <h2>Student Profile</h2>
+      <h2>{isEditMode ? 'Edit Student Profile' : 'Student Profile'}</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="name">Name *</label>
@@ -142,7 +169,10 @@ const StudentProfileForm = ({ onSuccess }) => {
             value={formData.email}
             onChange={handleInputChange}
             required
+            disabled={isEditMode}
+            style={isEditMode ? { backgroundColor: '#f0f0f0', cursor: 'not-allowed' } : {}}
           />
+          {isEditMode && <small style={{ display: 'block', marginTop: '4px', color: '#666' }}>Email cannot be changed</small>}
         </div>
 
         <div className="form-group">
@@ -228,9 +258,10 @@ const StudentProfileForm = ({ onSuccess }) => {
         </div>
 
         {error && <div className="error-message">{error}</div>}
+        {successMessage && <div style={{ color: 'green', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>{successMessage}</div>}
 
         <button type="submit" disabled={loading} className="submit-button">
-          {loading ? 'Creating Profile...' : 'Create Profile'}
+          {loading ? (isEditMode ? 'Updating Profile...' : 'Creating Profile...') : (isEditMode ? 'Update Profile' : 'Create Profile')}
         </button>
       </form>
     </div>

@@ -59,6 +59,33 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
+app.put('/api/students/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { name, major, year, skills, availability, interests } = req.body;
+    
+    const student = await prisma.student.update({
+      where: { email },
+      data: {
+        name,
+        major,
+        year,
+        skills: skills ? JSON.stringify(skills) : null,
+        availability: availability ? JSON.stringify(availability) : null,
+        interests
+      }
+    });
+    res.json(student);
+  } catch (error) {
+    console.error('Error updating student:', error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Student not found' });
+    } else {
+      res.status(500).json({ error: 'Failed to update student' });
+    }
+  }
+});
+
 // Instructor routes
 app.post('/api/instructors', async (req, res) => {
   try {
@@ -852,6 +879,262 @@ function calculateTeamBalanceScore(teams) {
   
   return skillDiversity + availabilityBalance;
 }
+
+// Team Invitation routes
+app.post('/api/teams/:teamId/invite', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { studentId, inviterId } = req.body;
+
+    // Check if team exists
+    const team = await prisma.team.findUnique({
+      where: { id: parseInt(teamId) },
+      include: { members: true }
+    });
+
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    // Check if team is full
+    if (team.members.length >= team.maxMembers) {
+      return res.status(400).json({ error: 'Team is full' });
+    }
+
+    // Check if student is already in a team for this project
+    if (team.projectId) {
+      const existingMembership = await prisma.teamMember.findFirst({
+        where: {
+          studentId: parseInt(studentId),
+          team: { projectId: team.projectId }
+        }
+      });
+
+      if (existingMembership) {
+        return res.status(400).json({ error: 'Student is already in a team for this project' });
+      }
+    }
+
+    // Check if there's already a pending invitation
+    const existingInvitation = await prisma.teamInvitation.findFirst({
+      where: {
+        teamId: parseInt(teamId),
+        studentId: parseInt(studentId),
+        status: 'pending'
+      }
+    });
+
+    if (existingInvitation) {
+      return res.status(400).json({ error: 'Invitation already sent' });
+    }
+
+    // Create invitation
+    const invitation = await prisma.teamInvitation.create({
+      data: {
+        teamId: parseInt(teamId),
+        studentId: parseInt(studentId),
+        inviterId: parseInt(inviterId),
+        status: 'pending'
+      },
+      include: {
+        team: {
+          include: {
+            project: true
+          }
+        },
+        student: true,
+        inviter: true
+      }
+    });
+
+    res.json(invitation);
+  } catch (error) {
+    console.error('Error creating team invitation:', error);
+    res.status(500).json({ error: 'Failed to create invitation' });
+  }
+});
+
+app.get('/api/students/:studentId/invitations', async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { status } = req.query; // optional filter by status
+
+    const where = {
+      studentId: parseInt(studentId)
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    const invitations = await prisma.teamInvitation.findMany({
+      where,
+      include: {
+        team: {
+          include: {
+            project: true,
+            members: {
+              include: {
+                student: true
+              }
+            }
+          }
+        },
+        inviter: true,
+        student: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(invitations);
+  } catch (error) {
+    console.error('Error fetching invitations:', error);
+    res.status(500).json({ error: 'Failed to fetch invitations' });
+  }
+});
+
+app.put('/api/invitations/:invitationId/respond', async (req, res) => {
+  try {
+    const { invitationId } = req.params;
+    const { status } = req.body; // 'accepted' or 'rejected'
+
+    if (!['accepted', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status. Must be "accepted" or "rejected"' });
+    }
+
+    // Get the invitation
+    const invitation = await prisma.teamInvitation.findUnique({
+      where: { id: parseInt(invitationId) },
+      include: {
+        team: {
+          include: {
+            members: true,
+            project: true
+          }
+        }
+      }
+    });
+
+    if (!invitation) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({ error: 'Invitation has already been responded to' });
+    }
+
+    // If accepting, validate team capacity and student status BEFORE updating invitation
+    if (status === 'accepted') {
+      // Refetch team to get current member count (in case it changed)
+      const currentTeam = await prisma.team.findUnique({
+        where: { id: invitation.teamId },
+        include: { members: true, project: true }
+      });
+
+      if (!currentTeam) {
+        return res.status(404).json({ error: 'Team not found' });
+      }
+
+      // Check if team is full (checking BEFORE adding the new member)
+      if (currentTeam.members.length >= currentTeam.maxMembers) {
+        return res.status(400).json({ error: 'Team is now full' });
+      }
+
+      // If student is already in a team for this project, we'll remove them first
+      // (This is handled in the acceptance logic below)
+    }
+
+    // Update invitation status
+    const updatedInvitation = await prisma.teamInvitation.update({
+      where: { id: parseInt(invitationId) },
+      data: { status },
+      include: {
+        team: {
+          include: {
+            project: true,
+            members: {
+              include: {
+                student: true
+              }
+            }
+          }
+        },
+        inviter: true,
+        student: true
+      }
+    });
+
+    // If accepted, add student to team
+    if (status === 'accepted') {
+      // Final safety check: refetch team to ensure it's still not full
+      const finalTeamCheck = await prisma.team.findUnique({
+        where: { id: invitation.teamId },
+        include: { members: true }
+      });
+
+      if (finalTeamCheck.members.length >= finalTeamCheck.maxMembers) {
+        // Revert invitation status since team became full
+        await prisma.teamInvitation.update({
+          where: { id: parseInt(invitationId) },
+          data: { status: 'pending' }
+        });
+        return res.status(400).json({ error: 'Team became full before you could join' });
+      }
+
+      // Remove student from any existing team in this project (if they're switching teams)
+      if (updatedInvitation.team.projectId) {
+        const existingMemberships = await prisma.teamMember.findMany({
+          where: {
+            studentId: invitation.studentId,
+            team: { projectId: updatedInvitation.team.projectId }
+          }
+        });
+
+        if (existingMemberships.length > 0) {
+          await prisma.teamMember.deleteMany({
+            where: {
+              studentId: invitation.studentId,
+              team: { projectId: updatedInvitation.team.projectId }
+            }
+          });
+        }
+      }
+
+      // Add student to team
+      await prisma.teamMember.create({
+        data: {
+          studentId: invitation.studentId,
+          teamId: invitation.teamId,
+          role: 'member'
+        }
+      });
+
+      // Reject all other pending invitations for this student in this project
+      if (updatedInvitation.team.projectId) {
+        await prisma.teamInvitation.updateMany({
+          where: {
+            studentId: invitation.studentId,
+            status: 'pending',
+            team: {
+              projectId: updatedInvitation.team.projectId,
+              id: { not: invitation.teamId }
+            }
+          },
+          data: {
+            status: 'rejected'
+          }
+        });
+      }
+    }
+
+    res.json(updatedInvitation);
+  } catch (error) {
+    console.error('Error responding to invitation:', error);
+    res.status(500).json({ error: 'Failed to respond to invitation' });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
