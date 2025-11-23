@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import AvailabilityHeatmap from './AvailabilityHeatmap'
 import './InstructorDashboard.css'
 
 const TextArea = (props) => (
@@ -226,6 +227,12 @@ const ProjectDetails = () => {
         </form>
       </div>
 
+      {/* Global Availability */}
+      <div className="section">
+        <h3>Global Availability</h3>
+        <AvailabilityHeatmap students={roster.students} />
+      </div>
+
       {/* Invite new students */}
       <div className="section">
         <h3>Invite Students</h3>
@@ -331,6 +338,14 @@ const ProjectDetails = () => {
                   </button>
                 </div>
               </div>
+              
+              <details style={{ marginBottom: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
+                <summary style={{ cursor: 'pointer', color: '#f0f0f0', fontSize: '0.9rem', userSelect: 'none' }}>Show Availability Heatmap</summary>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <AvailabilityHeatmap students={team.members.map(m => m.student)} />
+                </div>
+              </details>
+
               <Droppable droppableId={`team-${team.id}`}>
                 {(provided) => (
                   <div
