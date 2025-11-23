@@ -167,6 +167,79 @@
   box-shadow: none;
 }
 
+/* Typeform Mode Styles */
+.student-profile-form.typeform-mode {
+  max-width: 600px;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.step-indicator {
+  text-align: center;
+  color: rgba(240, 240, 240, 0.7);
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.step-content {
+  flex-grow: 1;
+  animation: fadeIn 0.5s ease;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  gap: 1rem;
+}
+
+.back-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #f0f0f0;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.progress-container {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  height: 6px;
+  border-radius: 3px;
+  position: relative;
+}
+
+.progress-bar {
+  background: #4CAF50;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  position: absolute;
+  right: 0;
+  top: 12px;
+  font-size: 0.8rem;
+  color: rgba(240, 240, 240, 0.6);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .student-profile-form {
