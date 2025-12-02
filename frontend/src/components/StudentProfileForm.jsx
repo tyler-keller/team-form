@@ -138,123 +138,319 @@ const StudentProfileForm = ({ onSuccess }) => {
     }
   }
 
-  return (
-    <div className="student-profile-form">
-      <h2>Student Profile</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">Name *</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
+  const [currentStep, setCurrentStep] = useState(0)
+  const steps = [
+    { title: 'Basic Info', fields: ['name', 'email'] },
+    { title: 'Academic Info', fields: ['major', 'year'] },
+    { title: 'Skills & Interests', fields: ['skills', 'interests'] },
+    { title: 'Availability', fields: ['availability'] }
+  ]
 
-        <div className="form-group">
-          <label htmlFor="email">Email *</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            readOnly
-            required
-          />
-        </div>
+  const handleNext = (e) => {
+    e.preventDefault()
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(prev => prev + 1)
+    } else {
+      handleSubmit(e)
+    }
+  }
 
-        <div className="form-group">
-          <label htmlFor="major">Major</label>
-          <input
-            type="text"
-            id="major"
-            name="major"
-            value={formData.major}
-            onChange={handleInputChange}
-            placeholder="e.g., Computer Science"
-          />
-        </div>
+  const handleBack = (e) => {
+    e.preventDefault()
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1)
+    }
+  }
 
-        <div className="form-group">
-          <label htmlFor="year">Academic Year</label>
-          <select
-            id="year"
-            name="year"
-            value={formData.year}
-            onChange={handleInputChange}
-          >
-            <option value="">Select Year</option>
-            <option value="Freshman">Freshman</option>
-            <option value="Sophomore">Sophomore</option>
-            <option value="Junior">Junior</option>
-            <option value="Senior">Senior</option>
-            <option value="Graduate">Graduate</option>
-          </select>
-        </div>
+  const renderProgressBar = () => {
+    const progress = ((currentStep + 1) / steps.length) * 100
+    return (
+      <div className="progress-container">
+        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+        <div className="progress-text">{Math.round(progress)}% Complete</div>
+      </div>
+    )
+  }
 
-        <div className="form-group">
-          <label htmlFor="skills">Skills (comma-separated)</label>
-          <input
-            type="text"
-            id="skills"
-            name="skills"
-            value={formData.skills}
-            onChange={handleInputChange}
-            placeholder="e.g., JavaScript, Python, Design, Leadership"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="interests">Interests</label>
-          <textarea
-            id="interests"
-            name="interests"
-            value={formData.interests}
-            onChange={handleInputChange}
-            placeholder="Tell us about your interests, hobbies, and what you're passionate about..."
-            rows="3"
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Availability</label>
-          <div className="availability-grid">
-            <div className="days-header">
-              <div className="time-header"></div>
-              {days.map(day => (
-                <div key={day} className="day-header">{day}</div>
-              ))}
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <>
+            <div className="form-group">
+              <label htmlFor="name">Name *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                autoFocus
+              />
             </div>
-            {timeSlots.map(timeSlot => (
-              <div key={timeSlot} className="time-row">
-                <div className="time-label">{timeSlot}</div>
+            <div className="form-group">
+              <label htmlFor="email">Email *</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                readOnly
+                required
+              />
+            </div>
+          </>
+        )
+      case 1:
+        return (
+          <>
+            <div className="form-group">
+              <label htmlFor="major">Major</label>
+              <input
+                type="text"
+                id="major"
+                name="major"
+                value={formData.major}
+                onChange={handleInputChange}
+                placeholder="e.g., Computer Science"
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="year">Academic Year</label>
+              <select
+                id="year"
+                name="year"
+                value={formData.year}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Year</option>
+                <option value="Freshman">Freshman</option>
+                <option value="Sophomore">Sophomore</option>
+                <option value="Junior">Junior</option>
+                <option value="Senior">Senior</option>
+                <option value="Graduate">Graduate</option>
+              </select>
+            </div>
+          </>
+        )
+      case 2:
+        return (
+          <>
+            <div className="form-group">
+              <label htmlFor="skills">Skills (comma-separated)</label>
+              <input
+                type="text"
+                id="skills"
+                name="skills"
+                value={formData.skills}
+                onChange={handleInputChange}
+                placeholder="e.g., JavaScript, Python, Design, Leadership"
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="interests">Interests</label>
+              <textarea
+                id="interests"
+                name="interests"
+                value={formData.interests}
+                onChange={handleInputChange}
+                placeholder="Tell us about your interests, hobbies, and what you're passionate about..."
+                rows="3"
+              />
+            </div>
+          </>
+        )
+      case 3:
+        return (
+          <div className="form-group">
+            <label>Availability</label>
+            <div className="availability-grid">
+              <div className="days-header">
+                <div className="time-header"></div>
                 {days.map(day => (
-                  <button
-                    key={`${day}-${timeSlot}`}
-                    type="button"
-                    className={`time-slot ${
-                      formData.availability[day]?.[timeSlot] ? 'selected' : ''
-                    }`}
-                    onClick={() => handleAvailabilityChange(day, timeSlot)}
-                  >
-                    {formData.availability[day]?.[timeSlot] ? '✓' : ''}
-                  </button>
+                  <div key={day} className="day-header">{day}</div>
                 ))}
               </div>
-            ))}
+              {timeSlots.map(timeSlot => (
+                <div key={timeSlot} className="time-row">
+                  <div className="time-label">{timeSlot}</div>
+                  {days.map(day => (
+                    <button
+                      key={`${day}-${timeSlot}`}
+                      type="button"
+                      className={`time-slot ${
+                        formData.availability[day]?.[timeSlot] ? 'selected' : ''
+                      }`}
+                      onClick={() => handleAvailabilityChange(day, timeSlot)}
+                    >
+                      {formData.availability[day]?.[timeSlot] ? '✓' : ''}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
+        )
+      default:
+        return null
+    }
+  }
+
+  if (isEditMode) {
+    return (
+      <div className="student-profile-form">
+        <h2>Edit Profile</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="name">Name *</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">Email *</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              readOnly
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="major">Major</label>
+            <input
+              type="text"
+              id="major"
+              name="major"
+              value={formData.major}
+              onChange={handleInputChange}
+              placeholder="e.g., Computer Science"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="year">Academic Year</label>
+            <select
+              id="year"
+              name="year"
+              value={formData.year}
+              onChange={handleInputChange}
+            >
+              <option value="">Select Year</option>
+              <option value="Freshman">Freshman</option>
+              <option value="Sophomore">Sophomore</option>
+              <option value="Junior">Junior</option>
+              <option value="Senior">Senior</option>
+              <option value="Graduate">Graduate</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="skills">Skills (comma-separated)</label>
+            <input
+              type="text"
+              id="skills"
+              name="skills"
+              value={formData.skills}
+              onChange={handleInputChange}
+              placeholder="e.g., JavaScript, Python, Design, Leadership"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="interests">Interests</label>
+            <textarea
+              id="interests"
+              name="interests"
+              value={formData.interests}
+              onChange={handleInputChange}
+              placeholder="Tell us about your interests, hobbies, and what you're passionate about..."
+              rows="3"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Availability</label>
+            <div className="availability-grid">
+              <div className="days-header">
+                <div className="time-header"></div>
+                {days.map(day => (
+                  <div key={day} className="day-header">{day}</div>
+                ))}
+              </div>
+              {timeSlots.map(timeSlot => (
+                <div key={timeSlot} className="time-row">
+                  <div className="time-label">{timeSlot}</div>
+                  {days.map(day => (
+                    <button
+                      key={`${day}-${timeSlot}`}
+                      type="button"
+                      className={`time-slot ${
+                        formData.availability[day]?.[timeSlot] ? 'selected' : ''
+                      }`}
+                      onClick={() => handleAvailabilityChange(day, timeSlot)}
+                    >
+                      {formData.availability[day]?.[timeSlot] ? '✓' : ''}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <button type="submit" disabled={loading} className="submit-button">
+            {loading ? 'Updating Profile...' : 'Update Profile'}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  return (
+    <div className="student-profile-form typeform-mode">
+      <h2>Create Your Profile</h2>
+      <div className="step-indicator">
+        Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
+      </div>
+      
+      <form onSubmit={handleNext}>
+        <div className="step-content">
+          {renderStepContent()}
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
-        <button type="submit" disabled={loading} className="submit-button">
-          {loading ? (isEditMode ? 'Updating Profile...' : 'Creating Profile...') : (isEditMode ? 'Update Profile' : 'Create Profile')}
-        </button>
+        <div className="form-actions">
+          {currentStep > 0 && (
+            <button type="button" onClick={handleBack} className="back-button">
+              Back
+            </button>
+          )}
+          <button type="submit" disabled={loading} className="submit-button">
+            {currentStep === steps.length - 1 
+              ? (loading ? 'Creating Profile...' : 'Complete Profile') 
+              : 'Next'}
+          </button>
+        </div>
       </form>
+      
+      {renderProgressBar()}
     </div>
   )
 }
