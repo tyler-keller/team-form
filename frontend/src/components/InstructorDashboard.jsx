@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import Papa from 'papaparse'
 import './InstructorDashboard.css'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
@@ -101,6 +102,33 @@ const InstructorDashboard = () => {
       console.error('Error creating project:', error)
       setError('Failed to create project')
     }
+  }
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    Papa.parse(file, {
+      header: true,
+      complete: (results) => {
+        const emails = results.data
+          .map(row => row['Email'])
+          .filter(email => email && email.trim().length > 0)
+        
+        if (emails.length > 0) {
+          setNewProject(prev => ({
+            ...prev,
+            studentEmails: emails.join('\n')
+          }))
+        } else {
+          alert('No emails found in the CSV file. Please ensure there is an "Email" column.')
+        }
+      },
+      error: (error) => {
+        console.error('Error parsing CSV:', error)
+        alert('Failed to parse CSV file.')
+      }
+    })
   }
 
   if (loading) {
@@ -227,6 +255,17 @@ const InstructorDashboard = () => {
               
               <div className="form-group">
                 <label htmlFor="studentEmails">Student Emails (one per line)</label>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileUpload}
+                    style={{ color: '#f0f0f0' }}
+                  />
+                  <div style={{ fontSize: '0.8rem', color: 'rgba(240, 240, 240, 0.7)', marginTop: '0.25rem' }}>
+                    Upload a CSV with an "Email" column. You can download a roster from Canvas: <a href="https://teacherscollege.screenstepslive.com/a/1286286-download-a-student-roster-in-canvas" target="_blank" rel="noopener noreferrer" style={{ color: '#4CAF50' }}>Instructions here</a>
+                  </div>
+                </div>
                 <textarea
                   id="studentEmails"
                   value={newProject.studentEmails}
@@ -234,6 +273,16 @@ const InstructorDashboard = () => {
                   rows="5"
                   placeholder="student1@example.com&#10;student2@example.com&#10;student3@example.com"
                   required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fileUpload">Or upload CSV file</label>
+                <input
+                  type="file"
+                  id="fileUpload"
+                  accept=".csv"
+                  onChange={handleFileUpload}
                 />
               </div>
               

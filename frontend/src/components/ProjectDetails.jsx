@@ -1,10 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import AvailabilityHeatmap from './AvailabilityHeatmap'
 import './InstructorDashboard.css'
 
 const TextArea = (props) => (
   <textarea {...props} style={{ width: '100%' }} />
+)
+
+const Toast = ({ message, onClose }) => (
+  <div style={{
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    background: '#f44336',
+    color: 'white',
+    padding: '12px 24px',
+    borderRadius: '4px',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+    zIndex: 2000,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
+  }}>
+    <span>{message}</span>
+    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2em' }}>&times;</button>
+  </div>
 )
 
 const ProjectDetails = () => {
@@ -12,14 +34,15 @@ const ProjectDetails = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [toast, setToast] = useState(null)
   const [project, setProject] = useState(null)
   const [roster, setRoster] = useState({ students: [], teams: [], invitedEmails: [] })
 
   const [editProject, setEditProject] = useState(null)
 
-  const fetchAll = async () => {
+  const fetchAll = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       const [projRes, rosterRes] = await Promise.all([
         axios.get(`/api/projects/${projectId}`),
         axios.get(`/api/projects/${projectId}/students`)
@@ -36,11 +59,18 @@ const ProjectDetails = () => {
     } catch (e) {
       setError('Failed to load project')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => { fetchAll() }, [projectId])
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   const invitedEmails = roster.invitedEmails || []
   const unassignedStudents = useMemo(() => roster.students.filter(s => !s.teamId), [roster])
@@ -52,8 +82,13 @@ const ProjectDetails = () => {
   const moveStudent = async (studentId, toTeamId) => {
     try {
       await axios.post(`/api/projects/${projectId}/move-student`, { studentId, toTeamId })
-      fetchAll()
-    } catch (e) { setError('Failed to move student') }
+      fetchAll(true)
+    } catch (e) { 
+      setToast('Failed to move student: ' + (e.response?.data?.error || e.message))
+      // Revert state by fetching fresh data
+      fetchAll(true)
+      // refresh page
+    }
   }
 
   const autoAssignStragglers = async () => {
@@ -61,6 +96,63 @@ const ProjectDetails = () => {
       await axios.post(`/api/projects/${projectId}/auto-assign-stragglers`)
       fetchAll()
     } catch (e) { setError('Failed to auto-assign stragglers') }
+  }
+
+  const onDragEnd = (result) => {
+    const { source, destination, draggableId } = result
+
+    if (!destination) return
+
+    if (source.droppableId === destination.droppableId) return
+
+    const studentId = parseInt(draggableId.replace('student-', ''))
+    let toTeamId = null
+
+    if (destination.droppableId !== 'unassigned') {
+      toTeamId = parseInt(destination.droppableId.replace('team-', ''))
+    }
+
+    // Optimistic update
+    const student = roster.students.find(s => s.id === studentId)
+    if (!student) return
+
+    // Update roster locally
+    const newRoster = { ...roster }
+    const studentIndex = newRoster.students.findIndex(s => s.id === studentId)
+    newRoster.students[studentIndex] = { ...student, teamId: toTeamId }
+    setRoster(newRoster)
+
+    // Update project teams locally
+    const newProject = { ...project }
+    const sourceTeamId = source.droppableId === 'unassigned' ? null : parseInt(source.droppableId.replace('team-', ''))
+    
+    // Remove from source
+    if (sourceTeamId) {
+      const sourceTeam = newProject.teams.find(t => t.id === sourceTeamId)
+      if (sourceTeam) {
+        sourceTeam.members = sourceTeam.members.filter(m => m.student.id !== studentId)
+      }
+    }
+
+    // Add to destination
+    if (toTeamId) {
+      const destTeam = newProject.teams.find(t => t.id === toTeamId)
+      if (destTeam) {
+        // Check capacity locally to prevent UI flicker if we know it will fail
+        if (destTeam.members.length >= destTeam.maxMembers) {
+           setToast(`Team ${destTeam.name} is full (max ${destTeam.maxMembers})`)
+           // wait a second then refresh page
+           setTimeout(() => {
+             window.location.reload()
+           }, 1000)
+           return // Don't call API, don't update state (revert happens automatically by not updating state)
+        }
+        destTeam.members.push({ id: Date.now(), student: student }) // Temp member ID
+      }
+    }
+    setProject(newProject)
+
+    moveStudent(studentId, toTeamId)
   }
 
   const saveProject = async (e) => {
@@ -74,7 +166,7 @@ const ProjectDetails = () => {
   const saveTeam = async (teamId, changes) => {
     try {
       await axios.put(`/api/teams/${teamId}/details`, changes)
-      fetchAll()
+      fetchAll(true)
     } catch (e) { setError('Failed to update team') }
   }
 
@@ -85,7 +177,7 @@ const ProjectDetails = () => {
     if (emails.length === 0) return
     try {
       await axios.post(`/api/projects/${projectId}/invite`, { emails })
-      fetchAll()
+      fetchAll(true)
     } catch (e) { setError('Failed to invite students') }
   }
 
@@ -93,8 +185,10 @@ const ProjectDetails = () => {
   if (error) return <div className="instructor-dashboard"><h2>Project</h2><div className="error-message">{error}</div></div>
 
   return (
-    <div className="instructor-dashboard">
-      <h2>Project: {project.name}</h2>
+    <DragDropContext onDragEnd={onDragEnd}>
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      <div className="instructor-dashboard">
+        <h2>Project: {project.name}</h2>
       <div style={{ marginBottom: '1rem' }}>
         <button className="toggle-button" onClick={() => navigate('/instructor')}>Back to Dashboard</button>
       </div>
@@ -133,6 +227,12 @@ const ProjectDetails = () => {
         </form>
       </div>
 
+      {/* Global Availability */}
+      <div className="section">
+        <h3>Global Availability</h3>
+        <AvailabilityHeatmap students={roster.students} />
+      </div>
+
       {/* Invite new students */}
       <div className="section">
         <h3>Invite Students</h3>
@@ -142,29 +242,51 @@ const ProjectDetails = () => {
       {/* Unassigned */}
       <div className="section">
         <h3>Unassigned Students ({unassignedStudents.length})</h3>
-        {unassignedStudents.length === 0 ? (
-          roster.students.length === 0 && invitedEmails.length > 0 ? (
-            <div className="no-data">No students have signed up yet.</div>
-          ) : (
-            <div className="no-data">All signed-up students are assigned</div>
-          )
-        ) : (
-          <div className="students-list">
-            {unassignedStudents.map(s => (
-              <div key={s.id} className="student-card">
-                <div className="student-name">{s.name || s.email}</div>
-                <div className="student-actions">
-                  {project.teams.map(t => (
-                    <button key={t.id} className="toggle-button" onClick={() => moveStudent(s.id, t.id)}>
-                      Move to {t.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <button className="submit-button" onClick={autoAssignStragglers}>Auto-Assign Stragglers</button>
+        <Droppable droppableId="unassigned">
+          {(provided) => (
+            <div
+              className="students-list"
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              style={{ minHeight: '100px', background: 'rgba(0, 0, 0, 0.2)', padding: '10px', borderRadius: '4px' }}
+            >
+              {unassignedStudents.map((s, index) => (
+                <Draggable key={s.id} draggableId={`student-${s.id}`} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className="student-card"
+                      style={{
+                        ...provided.draggableProps.style,
+                        marginBottom: '8px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#f0f0f0',
+                        padding: '8px',
+                        borderRadius: '4px',
+                        // Fix for DnD positioning
+                        top: provided.draggableProps.style?.top,
+                        left: provided.draggableProps.style?.left,
+                      }}
+                    >
+                      <div className="student-name">{s.name || s.email}</div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+              {unassignedStudents.length === 0 && (
+                 <div className="no-data" style={{textAlign: 'center', padding: '20px', color: 'rgba(240, 240, 240, 0.7)'}}>
+                    {roster.students.length === 0 && invitedEmails.length > 0 
+                      ? "No students have signed up yet." 
+                      : "Drop students here to unassign"}
+                 </div>
+              )}
+            </div>
+          )}
+        </Droppable>
+        <button className="submit-button" onClick={autoAssignStragglers} style={{ marginTop: '10px' }}>Auto-Assign Stragglers</button>
       </div>
 
       {/* Invited but not signed up */}
@@ -216,25 +338,61 @@ const ProjectDetails = () => {
                   </button>
                 </div>
               </div>
-              <div className="students-list">
-                {team.members.map(m => (
-                  <div key={m.id} className="student-card">
-                    <button
-                      className="student-name"
-                      style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer' }}
-                      onClick={() => setProfileStudent(m.student)}
-                    >
-                      {m.student.name || m.student.email}
-                    </button>
-                    <div className="student-actions">
-                      <button className="toggle-button" onClick={() => moveStudent(m.student.id, null)}>Unassign</button>
-                      {project.teams.filter(t => t.id !== team.id).map(t => (
-                        <button key={t.id} className="toggle-button" onClick={() => moveStudent(m.student.id, t.id)}>To {t.name}</button>
-                      ))}
-                    </div>
+              
+              <details style={{ marginBottom: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
+                <summary style={{ cursor: 'pointer', color: '#f0f0f0', fontSize: '0.9rem', userSelect: 'none' }}>Show Availability Heatmap</summary>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <AvailabilityHeatmap students={team.members.map(m => m.student)} />
+                </div>
+              </details>
+
+              <Droppable droppableId={`team-${team.id}`}>
+                {(provided) => (
+                  <div
+                    className="students-list"
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    style={{ minHeight: '50px', background: 'rgba(0, 0, 0, 0.2)', padding: '10px', borderRadius: '4px', marginTop: '10px' }}
+                  >
+                    {team.members.map((m, index) => (
+                      <Draggable key={m.student.id} draggableId={`student-${m.student.id}`} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="student-card"
+                            style={{
+                              ...provided.draggableProps.style,
+                              marginBottom: '8px',
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              color: '#f0f0f0',
+                              padding: '8px',
+                              borderRadius: '4px',
+                              // Fix for DnD positioning
+                              top: provided.draggableProps.style?.top,
+                              left: provided.draggableProps.style?.left,
+                            }}
+                          >
+                            <button
+                              className="student-name"
+                              onClick={() => setProfileStudent(m.student)}
+                            >
+                              {m.student.name || m.student.email}
+                            </button>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    {team.members.length === 0 && (
+                      <div style={{ textAlign: 'center', color: 'rgba(240, 240, 240, 0.5)', fontSize: '0.9em' }}>
+                        Drop students here
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+              </Droppable>
             </div>
           ))}
         </div>
@@ -263,7 +421,8 @@ const ProjectDetails = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DragDropContext>
   )
 }
 
