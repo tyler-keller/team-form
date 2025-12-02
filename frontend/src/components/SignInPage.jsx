@@ -42,6 +42,8 @@ const SignInPage = () => {
           
           if (selectedRole === 'student') {
             localStorage.setItem('studentEmail', email);
+          } else if (selectedRole === 'instructor') {
+            localStorage.setItem('instructorEmail', email);
           }
 
           setEmail('');
