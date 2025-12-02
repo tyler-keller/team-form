@@ -39,13 +39,25 @@ const SignInPage = () => {
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Login failed');
           localStorage.setItem('token', data.token);
+          
+          if (selectedRole === 'student') {
+            localStorage.setItem('studentEmail', email);
+          } else if (selectedRole === 'instructor') {
+            localStorage.setItem('instructorEmail', email);
+          }
+
           setEmail('');
           setPassword('');
           // Redirect based on role
           if (selectedRole === 'instructor') {
             navigate('/instructor');
           } else {
-            navigate('/student-dashboard');
+            // Check if student profile is complete (has name)
+            if (data.user && data.user.name) {
+              navigate('/student-dashboard');
+            } else {
+              navigate('/student');
+            }
           }
         } catch (err) {
           setError(err.message);

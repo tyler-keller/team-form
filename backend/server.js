@@ -67,8 +67,19 @@ app.get('/api/students', async (req, res) => {
 app.post('/api/students', async (req, res) => {
   try {
     const { name, email, major, year, skills, availability, interests } = req.body;
-    const student = await prisma.student.create({
-      data: {
+    
+    // Use upsert to handle both new students and updating existing ones (e.g. from registration)
+    const student = await prisma.student.upsert({
+      where: { email },
+      update: {
+        name,
+        major,
+        year,
+        skills: skills ? JSON.stringify(skills) : null,
+        availability: availability ? JSON.stringify(availability) : null,
+        interests
+      },
+      create: {
         name,
         email,
         major,
@@ -80,8 +91,8 @@ app.post('/api/students', async (req, res) => {
     });
     res.json(student);
   } catch (error) {
-    console.error('Error creating student:', error);
-    res.status(500).json({ error: 'Failed to create student' });
+    console.error('Error creating/updating student:', error);
+    res.status(500).json({ error: 'Failed to create/update student' });
   }
 });
 
