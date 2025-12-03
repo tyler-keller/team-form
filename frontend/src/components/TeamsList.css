@@ -1,3 +1,36 @@
+/* Edit icon button should always have a transparent background */
+/* Edit icon button should always have a transparent background except on hover */
+.edit-team-btn {
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.edit-team-btn:hover:not(:disabled) {
+  background: transparent !important;
+  box-shadow: 0 4px 16px rgba(21, 101, 192, 0.25) !important;
+  outline: none !important;
+  border-radius: 6px !important;
+}
+/* Hover effect for student name chip */
+.student-name-chip:hover,
+.student-name-chip.hover {
+  background: none !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(21, 101, 192, 0.25) !important;
+  cursor: pointer !important;
+}
+/* Join Team button should be blue */
+.join-btn, button.join-btn {
+  background: #1976d2 !important;
+  color: #fff !important;
+  border: 2px solid #1976d2 !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+  box-shadow: none !important;
+}
 .teams-list {
   max-width: 1200px;
   margin: 0 auto;
@@ -18,7 +51,7 @@
 
 .refresh-button {
   background: #4CAF50;
-  color: white;
+  color: #f0f0f0;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -27,28 +60,28 @@
 }
 
 .refresh-button:hover {
-  background: #45a049;
+  background: #388e3c;
 }
 
 .loading, .error, .no-teams {
   text-align: center;
   padding: 2rem;
   color: #f0f0f0;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(40, 40, 50, 0.7);
   border-radius: 10px;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(60, 60, 80, 0.3);
 }
 
 .error {
   color: #ffcdd2;
-  background: rgba(244, 67, 54, 0.2);
-  border-color: rgba(244, 67, 54, 0.5);
+  background: rgba(244, 67, 54, 0.15);
+  border-color: rgba(244, 67, 54, 0.4);
 }
 
 .retry-button {
   background: #4CAF50;
-  color: white;
+  color: #f0f0f0;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -58,7 +91,7 @@
 }
 
 .retry-button:hover {
-  background: #45a049;
+  background: #388e3c;
 }
 
 .teams-grid {
@@ -68,17 +101,17 @@
 }
 
 .team-card {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(40, 40, 50, 0.7);
   border-radius: 15px;
   padding: 1.5rem;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(60, 60, 80, 0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .team-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .team-header {
@@ -94,7 +127,7 @@
 }
 
 .team-description {
-  color: rgba(240, 240, 240, 0.8);
+  color: #b0b0b0;
   margin: 0 0 1rem 0;
   font-style: italic;
 }

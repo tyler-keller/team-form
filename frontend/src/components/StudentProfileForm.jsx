@@ -302,7 +302,7 @@ const StudentProfileForm = ({ onSuccess }) => {
 
   if (isEditMode) {
     return (
-      <div className="student-profile-form">
+      <div className="student-profile-form" style={{ marginTop: '2rem', marginBottom: '2rem' }}>
         <h2>Edit Profile</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -423,7 +423,7 @@ const StudentProfileForm = ({ onSuccess }) => {
   }
 
   return (
-    <div className="student-profile-form typeform-mode">
+    <div className="student-profile-form typeform-mode" style={{ marginTop: '2rem' }}>
       <h2>Create Your Profile</h2>
       <div className="step-indicator">
         Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}

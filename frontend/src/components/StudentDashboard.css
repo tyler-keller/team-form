@@ -1,0 +1,187 @@
+/* Absolutely remove all hover/focus/active effects from team-card */
+.team-card,
+.team-card:hover,
+.team-card:focus,
+.team-card:active {
+  background: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  filter: none !important;
+}
+/* Remove all hover effects from team-card */
+.team-card:hover, .team-card:active, .team-card:focus {
+  background: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+/* Hover effect for student name and email chip */
+.student-name-chip:hover,
+.student-name-chip.hover {
+  background: #1565c0 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15) !important;
+  cursor: pointer !important;
+}
+/* JS-driven hover effect for student-name-chip */
+.student-name-chip.hover {
+  background: #1565c0 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15) !important;
+  cursor: pointer !important;
+}
+ .team-members button.member-row, .team-members .member-row, button.member-row, button.member-row:active, button.member-row:focus, button.member-row:visited {
+  background: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+.team-members button.member-row, .team-members .member-row, button.member-row {
+  background-color: transparent !important;
+  background: none !important;
+}
+/* Member row base style */
+.member-row, button.member-row {
+  background: none !important;
+}
+
+.team-members button.member-row {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.team-actions .join-btn, .join-btn, button.join-btn {
+  background: #1976d2 !important;
+  color: #fff !important;
+  border: 2px solid #1976d2 !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+  box-shadow: none !important;
+}
+.join-btn:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+.join-btn:hover:not(:disabled) {
+  background: #1565c0 !important;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15) !important;
+}
+.edit-team-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 0.5rem auto !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  cursor: pointer !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+  padding: 0 !important;
+}
+
+.edit-team-btn:hover:not(:disabled) {
+  background: #1565c0 !important;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15) !important;
+}
+.edit-team-btn:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+.edit-team-btn:hover:not(:disabled) {
+  background: #1565c0 !important;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15) !important;
+}
+button.member-row > .student-name-chip,
+button.member-row span.student-name-chip,
+.member-row .student-name-chip,
+.student-name-chip,
+button.member-row .student-name-chip {
+  background: #1976d2 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 2px #1976d2 !important;
+  z-index: 1 !important;
+  padding: 12px 32px !important;
+  border-radius: 6px !important;
+  margin-right: 0.5em !important;
+  display: inline-block !important;
+  border: none !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+}
+
+/* Style for each student in a team: padding and rounded corners */
+.member-row {
+  background: transparent !important;
+  margin-bottom: 0.5rem;
+  display: block;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  width: 100%;
+  text-align: left;
+  transition: background 0.2s;
+}
+/* Force all modal text, labels, inputs, and textareas to white, override any other CSS */
+.modal, .modal *, .modal label, .modal input, .modal textarea {
+  color: #f0f0f0 !important;
+  -webkit-text-fill-color: #f0f0f0 !important;
+}
+.modal input, .modal textarea {
+  background: #23263a !important;
+  border: 1px solid #444 !important;
+}
+/* Force modal headers to be white */
+.modal h1, .modal h2, .modal h3, .modal h4, .modal h5, .modal h6 {
+  color: #f0f0f0 !important;
+}
+/* Force all text in the modal to be white */
+.modal, .modal * {
+  color: #f0f0f0 !important;
+}
+/* Stronger selector for edit team modal background - fully opaque, no transparency */
+.modal-overlay .modal {
+  background: #181a26 !important;
+  color: #f0f0f0 !important;
+  box-shadow: 0 4px 32px #000 !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+/* Dark background for edit team modal - fully opaque, no transparency */
+.modal {
+  background: #181a26 !important;
+  color: #f0f0f0 !important;
+  box-shadow: 0 4px 32px #000 !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+/* Add horizontal margin to project cards */
+.project-card {
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+}
+.edit-profile-btn {
+  background: #1976d2 !important;
+  color: #f0f0f0 !important;
+  border: none !important;
+  padding: 1.25rem 2.5rem !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+  margin: 1rem 0 !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+}
+
+.edit-profile-btn:hover {
+  background: #1565c0 !important;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15) !important;
+}

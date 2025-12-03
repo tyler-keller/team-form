@@ -53,26 +53,30 @@ const RegistrationPage = () => {
     <div className="registration-container">
       <h2>Registration</h2>
       <form className="registration-form" onSubmit={handleSubmit}>
-        <label htmlFor="role-select" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+        <label htmlFor="role-select" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', textAlign: 'center' }}>
           Select a Role
         </label>
-        <select
-          id="role-select"
-          value={selectedRole}
-          onChange={e => setSelectedRole(e.target.value)}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.5rem',
-            border: '1px solid #ccc',
-            fontSize: '1rem',
-            outline: 'none',
-            minWidth: '180px',
-            marginBottom: '1rem'
-          }}
-        >
-          <option value="student">Student</option>
-          <option value="instructor">Instructor</option>
-        </select>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <select
+            id="role-select"
+            value={selectedRole}
+            onChange={e => setSelectedRole(e.target.value)}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #ccc',
+              fontSize: '1rem',
+              outline: 'none',
+              minWidth: '220px',
+              width: '220px',
+              marginBottom: '1rem',
+              textAlign: 'center'
+            }}
+          >
+            <option value="student">Student</option>
+            <option value="instructor">Instructor</option>
+          </select>
+        </div>
         <input type="email" placeholder="Email" className="registration-input" value={email} onChange={e => setEmail(e.target.value)} required />
         <input type="password" placeholder="Password" className="registration-input" value={password} onChange={e => setPassword(e.target.value)} required />
         <button type="submit" className="registration-btn">Sign Up</button>
@@ -115,7 +119,7 @@ const RegistrationPage = () => {
           type="button"
           onClick={() => navigate('/sign-in', { state: { role: selectedRole } })}
         >
-          Back to Sign In
+          Already have an account? Sign in
         </button>
       </div>
     </div>

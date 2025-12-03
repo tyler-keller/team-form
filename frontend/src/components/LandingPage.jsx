@@ -11,9 +11,9 @@ const LandingPage = () => {
     <div className="landing-container">
       <nav className="navbar">
         <h1 className="logo">Team Formation App</h1>
-          <div className="nav-buttons">
-            <button onClick={() => navigate('/sign-in')} className="nav-btn">Sign In</button>
-          </div>
+        <div className="nav-buttons">
+          <button onClick={() => navigate('/sign-in')} className="nav-btn">Sign In</button>
+        </div>
       </nav>
       <main className="main-content">
         <h2>Welcome to the Team Formation App</h2>

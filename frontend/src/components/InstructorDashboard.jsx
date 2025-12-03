@@ -198,10 +198,7 @@ const InstructorDashboard = () => {
         <div className="section">
           <h3>Instructor</h3>
           <div>
-            Using: {localStorage.getItem('instructorEmail') || 'Unknown'}
-            <div style={{ marginTop: '0.5rem' }}>
-              <button className="toggle-button" onClick={() => navigate('/instructor')}>Switch Instructor</button>
-            </div>
+            {localStorage.getItem('instructorEmail') || 'Unknown'}
           </div>
         </div>
 
@@ -346,7 +343,7 @@ const InstructorDashboard = () => {
                 <div key={project.id} className="project-card">
                   <div className="project-header">
                     <h4><Link to={`/project/${project.id}`}>{project.name}</Link></h4>
-                    <span className="project-status">{project.status}</span>
+                    <span className={`project-status${project.status === 'cancelled' ? ' cancelled' : project.status === 'completed' ? ' completed' : ''}`}>{project.status}</span>
                   </div>
                   <p className="project-description">{project.description}</p>
                   <div className="project-details">

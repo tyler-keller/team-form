@@ -274,6 +274,7 @@ const StudentDashboard = () => {
         <button onClick={() => { localStorage.clear(); navigate('/'); }} style={{ padding: '0.5rem 1.2rem', borderRadius: '1rem', background: '#1976d2', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem', marginRight: '1rem' }}>Logout</button>
       </div>
       <h2>Student Dashboard</h2>
+      {/* Only className for styling, no inline style here! */}
       <button onClick={() => navigate('/edit-profile')} className="edit-profile-btn">Edit Profile</button>
       <h3>Your Projects</h3>
       {loading ? <p>Loading...</p> : error ? <p>{error}</p> : (
@@ -288,8 +289,8 @@ const StudentDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <h4>{project.name}</h4>
                     <span style={{ 
-                      padding: '0.25rem 0.75rem', 
-                      borderRadius: '12px', 
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '12px',
                       fontSize: '0.875rem',
                       background: project.status === 'completed' ? '#4CAF50' : project.status === 'cancelled' ? '#f44336' : '#2196F3',
                       color: 'white'
@@ -326,8 +327,23 @@ const StudentDashboard = () => {
                         const isCurrentTeam = currentTeamId === team.id;
                         return (
                           <div key={team.id} className="team-card">
-                            <div className="team-header">
-                              <strong>{team.name || `Team ${team.teamNumber || ''}`}</strong>
+                            <div className="team-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <strong>{team.name || `Team ${team.teamNumber || ''}`}</strong>
+                                {isCurrentTeam && (
+                                  <button
+                                    className="edit-team-btn"
+                                    onClick={() => openEditModal(project, team)}
+                                    disabled={project.status === 'completed'}
+                                    title="Edit Team"
+                                    style={{ margin: 0, background: 'none', backgroundColor: 'transparent', boxShadow: 'none', border: 'none', outline: 'none' }}
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                      <path d="M14.85 2.85a1.2 1.2 0 0 1 1.7 1.7l-9.1 9.1-2.1.4.4-2.1 9.1-9.1Zm2.12-2.12a3.2 3.2 0 0 0-4.53 0l-9.1 9.1A1 1 0 0 0 3 11.5v3.5a1 1 0 0 0 1 1h3.5a1 1 0 0 0 .7-.29l9.1-9.1a3.2 3.2 0 0 0 0-4.53Z" fill="#f0f0f0"/>
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
                               <span>
                                 {members.length}/{team.maxMembers} members
                               </span>
@@ -339,23 +355,26 @@ const StudentDashboard = () => {
                                   key={m.id}
                                   className="member-row"
                                   onClick={() => setProfileStudent(m.student)}
-                                  style={{ textAlign: 'left', width: '100%', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+                                  style={{ background: 'none', backgroundColor: 'transparent', boxShadow: 'none', border: 'none', outline: 'none' }}
                                 >
-                                  {m.student?.name || 'Student'}{m.student?.email ? ` (${m.student.email})` : ''}
+                                  <span
+                                    className="student-name-chip"
+                                    tabIndex={0}
+                                    role="button"
+                                    onMouseEnter={e => e.currentTarget.classList.add('hover')}
+                                    onMouseLeave={e => e.currentTarget.classList.remove('hover')}
+                                    onFocus={e => e.currentTarget.classList.add('hover')}
+                                    onBlur={e => e.currentTarget.classList.remove('hover')}
+                                  >
+                                    {m.student?.name || 'Student'}{m.student?.email ? ` (${m.student.email})` : ''}
+                                  </span>
                                 </button>
                               ))}
                               {members.length === 0 ? <div className="member-row">No members yet</div> : null}
                             </div>
                             <div className="team-actions">
                               {isCurrentTeam ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                  <button
-                                    className="edit-team-btn"
-                                    onClick={() => openEditModal(project, team)}
-                                    disabled={project.status === 'completed'}
-                                  >
-                                    Edit Team
-                                  </button>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
                                   <button
                                     className="leave-team-btn"
                                     onClick={() => handleLeaveTeam(project.id, team.id)}
@@ -379,10 +398,6 @@ const StudentDashboard = () => {
                                   onClick={() => handleJoinTeam(project.id, team)}
                                   disabled={isFull || project.status === 'completed'}
                                   className="join-btn"
-                                  style={{
-                                    opacity: (isFull || project.status === 'completed') ? 0.6 : 1,
-                                    cursor: (isFull || project.status === 'completed') ? 'not-allowed' : 'pointer'
-                                  }}
                                 >
                                   {project.status === 'completed' ? 'Project Completed' : isFull ? 'Team Full' : 'Join Team'}
                                 </button>
@@ -403,7 +418,7 @@ const StudentDashboard = () => {
       )}
       {editingTeam && (
         <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="modal" style={{ background: '#fff', padding: 16, borderRadius: 8, width: 'min(520px, 92vw)' }}>
+          <div className="modal" style={{ background: '#181a26', padding: 16, borderRadius: 8, width: 'min(520px, 92vw)' }}>
             <h4>Edit Team</h4>
             <form onSubmit={submitEdit}>
               <div style={{ marginBottom: 8 }}>
@@ -449,7 +464,7 @@ const StudentDashboard = () => {
       )}
       {profileStudent && (
         <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="modal" style={{ background: '#fff', padding: 16, borderRadius: 8, width: 'min(520px, 92vw)' }}>
+          <div className="modal" style={{ background: '#181a26', padding: 16, borderRadius: 8, width: 'min(520px, 92vw)' }}>
             <h4>Student Profile</h4>
             <div style={{ display: 'grid', gap: 8 }}>
               <div>
@@ -479,7 +494,7 @@ const StudentDashboard = () => {
       )}
       {peerReviewProject && (
         <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="modal" style={{ background: '#fff', padding: 20, borderRadius: 8, width: 'min(600px, 92vw)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="modal" style={{ background: '#181a26', padding: 20, borderRadius: 8, width: 'min(600px, 92vw)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h4>Peer Reviews for {peerReviewProject.name}</h4>
             <p style={{ marginBottom: '1rem', color: '#666', fontSize: '0.9rem' }}>
               Please provide feedback for each of your team members. Your reviews will be visible to the instructor.

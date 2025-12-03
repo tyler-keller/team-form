@@ -50,7 +50,7 @@
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: rgba(240, 240, 240, 0.6);
+  color: #b0b0b0;
 }
 
 .availability-grid {

@@ -1,8 +1,33 @@
+/* Force project-card margin globally for all specificity issues */
+.project-card {
+  margin-left: 1.5rem !important;
+  margin-right: 1.5rem !important;
+}
+/* Force edit-profile-btn style globally for all specificity issues */
+.edit-profile-btn {
+  background: #444 !important;
+  color: #f0f0f0 !important;
+  border: none !important;
+  padding: 0.5rem 1.2rem !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+  margin: 1rem 0 !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+}
+
+.edit-profile-btn:hover {
+  background: #333 !important;
+  box-shadow: 0 4px 16px rgba(68, 68, 68, 0.15) !important;
+}
 .app {
   text-align: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #181a20;
+  color: #f0f0f0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -21,14 +46,13 @@
 }
 
 .connection-test {
-  background: rgba(255, 255, 255, 0.1);
+  background: #181a20;
   border-radius: 10px;
   padding: 2rem;
   margin: 2rem 0;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
+  border: 1px solid rgba(60, 60, 80, 0.3);
+  color: #f0f0f0;
 .connection-test h2 {
   margin-bottom: 1rem;
   color: #f0f0f0;
@@ -37,63 +61,33 @@
 .message {
   font-size: 1.2rem;
   margin: 1rem 0;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(60, 60, 80, 0.3);
+  background: rgba(40, 40, 50, 0.7);
   border-radius: 5px;
   border-left: 4px solid #4CAF50;
 }
 
 .test-button {
   background: #4CAF50;
-  color: white;
+  color: #f0f0f0;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
   transition: background-color 0.3s;
 }
 
-.test-button:hover {
-  background: #45a049;
-}
 
-.features {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 2rem;
-  margin-top: 2rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.features h2 {
-  margin-bottom: 1rem;
-  color: #f0f0f0;
-}
-
-.features ul {
-  list-style: none;
-  padding: 0;
-  text-align: left;
-  max-width: 400px;
-  margin: 0 auto;
-}
 
 .features li {
   padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+  background: rgba(60, 60, 80, 0.7);
+  border-bottom: 1px solid #4CAF50;
 
 .features li:last-child {
   border-bottom: none;
-}
-
-.features li::before {
   content: "✓ ";
   color: #4CAF50;
   font-weight: bold;
-}
 
 .success-message {
   background: rgba(76, 175, 80, 0.2);
