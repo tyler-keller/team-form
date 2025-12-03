@@ -65,6 +65,11 @@ const StudentInvitation = ({ projectId, studentEmail }) => {
   }
 
   const handleJoinTeam = async (teamId) => {
+    if (project && project.status === 'completed') {
+      alert('Cannot join teams for a completed project.')
+      return
+    }
+    
     try {
       await axios.post(`/api/teams/${teamId}/members`, {
         studentId: student.id,
@@ -85,6 +90,14 @@ const StudentInvitation = ({ projectId, studentEmail }) => {
   }
 
   const handleLeaveTeam = async (teamId) => {
+    if (project && project.status === 'completed') {
+      alert('Cannot leave teams for a completed project.')
+      return
+    }
+    
+    const confirmed = window.confirm('Are you sure you want to leave this team?')
+    if (!confirmed) return
+    
     try {
       await axios.delete(`/api/teams/${teamId}/members/${student.id}`)
       setSelectedTeam(null)
@@ -92,7 +105,11 @@ const StudentInvitation = ({ projectId, studentEmail }) => {
       alert('Left team successfully!')
     } catch (error) {
       console.error('Error leaving team:', error)
-      alert('Failed to leave team')
+      if (error.response?.data?.error) {
+        alert(error.response.data.error)
+      } else {
+        alert('Failed to leave team')
+      }
     }
   }
 
@@ -210,12 +227,18 @@ const StudentInvitation = ({ projectId, studentEmail }) => {
                         <button 
                           onClick={() => setSelectedTeam(team.id)}
                           className="edit-button"
+                          disabled={project.status === 'completed'}
                         >
                           Edit Team
                         </button>
                         <button 
                           onClick={() => handleLeaveTeam(team.id)}
                           className="leave-button"
+                          disabled={project.status === 'completed'}
+                          style={{
+                            opacity: project.status === 'completed' ? 0.6 : 1,
+                            cursor: project.status === 'completed' ? 'not-allowed' : 'pointer'
+                          }}
                         >
                           Leave Team
                         </button>
@@ -223,10 +246,14 @@ const StudentInvitation = ({ projectId, studentEmail }) => {
                     ) : (
                       <button 
                         onClick={() => handleJoinTeam(team.id)}
-                        disabled={isFull}
-                        className={`join-button ${isFull ? 'disabled' : ''}`}
+                        disabled={isFull || project.status === 'completed'}
+                        className={`join-button ${isFull || project.status === 'completed' ? 'disabled' : ''}`}
+                        style={{
+                          opacity: (isFull || project.status === 'completed') ? 0.6 : 1,
+                          cursor: (isFull || project.status === 'completed') ? 'not-allowed' : 'pointer'
+                        }}
                       >
-                        {isFull ? 'Team Full' : 'Join Team'}
+                        {project.status === 'completed' ? 'Project Completed' : isFull ? 'Team Full' : 'Join Team'}
                       </button>
                     )}
                   </div>

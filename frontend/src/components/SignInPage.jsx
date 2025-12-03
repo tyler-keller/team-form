@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './SignInPage.css';
 
 const SignInPage = () => {
   const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState('student');
+  const location = useLocation();
+  // Get role from location state or default to 'student'
+  const initialRole = location.state?.role || 'student';
+  const [selectedRole, setSelectedRole] = useState(initialRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  // Update role if location state changes
+  useEffect(() => {
+    if (location.state?.role) {
+      setSelectedRole(location.state.role);
+    }
+  }, [location.state]);
 
   return (
     <div className="signin-container">

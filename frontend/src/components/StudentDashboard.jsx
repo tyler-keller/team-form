@@ -12,6 +12,10 @@ const StudentDashboard = () => {
   const [editValues, setEditValues] = useState({ name: '', description: '', maxMembers: '' });
   const [editError, setEditError] = useState('');
   const [profileStudent, setProfileStudent] = useState(null); // student object
+  const [peerReviewProject, setPeerReviewProject] = useState(null); // project for peer review
+  const [teamMembersForReview, setTeamMembersForReview] = useState([]);
+  const [peerReviewTexts, setPeerReviewTexts] = useState({}); // { revieweeId: reviewText }
+  const [peerReviewLoading, setPeerReviewLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,6 +77,13 @@ const StudentDashboard = () => {
     }
 
     const project = projects.find(p => p.id === projectId);
+    
+    // Check if project is completed
+    if (project && project.status === 'completed') {
+      alert('Cannot join teams for a completed project.');
+      return;
+    }
+    
     const currentTeamId = project ? getStudentCurrentTeamIdForProject(project) : null;
 
     if (currentTeamId === team.id) {
@@ -103,6 +114,37 @@ const StudentDashboard = () => {
       alert('Successfully joined the team');
     } catch (e) {
       const msg = e?.response?.data?.error || 'Failed to join team';
+      alert(msg);
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLeaveTeam = async (projectId, teamId) => {
+    if (!student) {
+      alert('Please complete your student profile first.');
+      return;
+    }
+
+    const project = projects.find(p => p.id === projectId);
+    
+    // Check if project is completed
+    if (project && project.status === 'completed') {
+      alert('Cannot leave teams for a completed project.');
+      return;
+    }
+
+    const confirmed = window.confirm('Are you sure you want to leave this team?');
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      await axios.delete(`/api/teams/${teamId}/members/${student.id}`);
+      await initialize(studentEmail);
+      alert('Successfully left the team');
+    } catch (e) {
+      const msg = e?.response?.data?.error || 'Failed to leave team';
       alert(msg);
       setError(msg);
     } finally {
@@ -164,6 +206,68 @@ const StudentDashboard = () => {
     }
   };
 
+  const openPeerReviewModal = async (project) => {
+    if (!student) {
+      alert('Please complete your student profile first.');
+      return;
+    }
+    
+    try {
+      setPeerReviewLoading(true);
+      const response = await axios.get(`/api/projects/${project.id}/team-members/${student.id}`);
+      setTeamMembersForReview(response.data.teamMembers || []);
+      
+      // Load existing reviews
+      const reviewsResponse = await axios.get(`/api/projects/${project.id}/peer-reviews/student/${student.id}`);
+      const existingReviews = {};
+      reviewsResponse.data.forEach(review => {
+        existingReviews[review.revieweeId] = review.reviewText || '';
+      });
+      setPeerReviewTexts(existingReviews);
+      
+      setPeerReviewProject(project);
+    } catch (error) {
+      alert('Failed to load team members for review: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setPeerReviewLoading(false);
+    }
+  };
+
+  const closePeerReviewModal = () => {
+    setPeerReviewProject(null);
+    setTeamMembersForReview([]);
+    setPeerReviewTexts({});
+  };
+
+  const submitPeerReview = async (revieweeId) => {
+    if (!student || !peerReviewProject) return;
+    
+    const reviewText = peerReviewTexts[revieweeId] || '';
+    
+    try {
+      setPeerReviewLoading(true);
+      await axios.post('/api/peer-reviews', {
+        reviewerId: student.id,
+        revieweeId: revieweeId,
+        projectId: peerReviewProject.id,
+        reviewText: reviewText.trim()
+      });
+      
+      // Update the hasReview status
+      setTeamMembersForReview(prev => 
+        prev.map(member => 
+          member.id === revieweeId ? { ...member, hasReview: true } : member
+        )
+      );
+      
+      alert('Peer review submitted successfully!');
+    } catch (error) {
+      alert('Failed to submit peer review: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setPeerReviewLoading(false);
+    }
+  };
+
   return (
     <div className="student-dashboard">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
@@ -177,10 +281,42 @@ const StudentDashboard = () => {
           <div className="projects-list">
             {projects.map((project) => {
               const currentTeamId = getStudentCurrentTeamIdForProject(project);
+              const isCompleted = project.status === 'completed';
+              const isInTeam = currentTeamId !== null;
               return (
                 <div key={project.id} className="project-card">
-                  <h4>{project.name}</h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4>{project.name}</h4>
+                    <span style={{ 
+                      padding: '0.25rem 0.75rem', 
+                      borderRadius: '12px', 
+                      fontSize: '0.875rem',
+                      background: project.status === 'completed' ? '#4CAF50' : project.status === 'cancelled' ? '#f44336' : '#2196F3',
+                      color: 'white'
+                    }}>
+                      {project.status}
+                    </span>
+                  </div>
                   {project.description ? <p>{project.description}</p> : null}
+                  {isCompleted && isInTeam && (
+                    <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '8px', border: '1px solid rgba(76, 175, 80, 0.3)' }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontWeight: '500' }}>This project is completed. Please provide peer reviews for your team members.</p>
+                      <button
+                        onClick={() => openPeerReviewModal(project)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          background: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: '500'
+                        }}
+                      >
+                        Fill Out Peer Reviews
+                      </button>
+                    </div>
+                  )}
                   <div className="teams-section">
                     <h5>Teams</h5>
                     <div className="teams-grid">
@@ -212,22 +348,43 @@ const StudentDashboard = () => {
                             </div>
                             <div className="team-actions">
                               {isCurrentTeam ? (
-                                <>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                   <button
                                     className="edit-team-btn"
                                     onClick={() => openEditModal(project, team)}
+                                    disabled={project.status === 'completed'}
                                   >
                                     Edit Team
                                   </button>
-                                  <span style={{ marginLeft: 8, fontStyle: 'italic' }}>(Your team)</span>
-                                </>
+                                  <button
+                                    className="leave-team-btn"
+                                    onClick={() => handleLeaveTeam(project.id, team.id)}
+                                    disabled={project.status === 'completed'}
+                                    style={{
+                                      padding: '0.5rem 1rem',
+                                      background: '#f44336',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      cursor: project.status === 'completed' ? 'not-allowed' : 'pointer',
+                                      opacity: project.status === 'completed' ? 0.6 : 1
+                                    }}
+                                  >
+                                    Leave Team
+                                  </button>
+                                  <span style={{ fontStyle: 'italic', fontSize: '0.875rem' }}>(Your team)</span>
+                                </div>
                               ) : (
                                 <button
                                   onClick={() => handleJoinTeam(project.id, team)}
-                                  disabled={isFull}
+                                  disabled={isFull || project.status === 'completed'}
                                   className="join-btn"
+                                  style={{
+                                    opacity: (isFull || project.status === 'completed') ? 0.6 : 1,
+                                    cursor: (isFull || project.status === 'completed') ? 'not-allowed' : 'pointer'
+                                  }}
                                 >
-                                  {isFull ? 'Team Full' : 'Join Team'}
+                                  {project.status === 'completed' ? 'Project Completed' : isFull ? 'Team Full' : 'Join Team'}
                                 </button>
                               )}
                             </div>
@@ -316,6 +473,73 @@ const StudentDashboard = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
               <button onClick={() => setProfileStudent(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {peerReviewProject && (
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal" style={{ background: '#fff', padding: 20, borderRadius: 8, width: 'min(600px, 92vw)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h4>Peer Reviews for {peerReviewProject.name}</h4>
+            <p style={{ marginBottom: '1rem', color: '#666', fontSize: '0.9rem' }}>
+              Please provide feedback for each of your team members. Your reviews will be visible to the instructor.
+            </p>
+            {peerReviewLoading && teamMembersForReview.length === 0 ? (
+              <p>Loading team members...</p>
+            ) : teamMembersForReview.length === 0 ? (
+              <p>No team members found to review.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                {teamMembersForReview.map(member => (
+                  <div key={member.id} style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+                    <div style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+                      {member.name || member.email}
+                      {member.hasReview && (
+                        <span style={{ marginLeft: '0.5rem', color: '#4CAF50', fontSize: '0.875rem' }}>
+                          ✓ Review submitted
+                        </span>
+                      )}
+                    </div>
+                    <textarea
+                      placeholder="Enter your peer review for this team member..."
+                      value={peerReviewTexts[member.id] || ''}
+                      onChange={(e) => setPeerReviewTexts(prev => ({ ...prev, [member.id]: e.target.value }))}
+                      rows={4}
+                      style={{ width: '100%', padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '0.5rem' }}
+                    />
+                    <button
+                      onClick={() => submitPeerReview(member.id)}
+                      disabled={peerReviewLoading}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: member.hasReview ? '#4CAF50' : '#2196F3',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: peerReviewLoading ? 'not-allowed' : 'pointer',
+                        opacity: peerReviewLoading ? 0.6 : 1
+                      }}
+                    >
+                      {member.hasReview ? 'Update Review' : 'Submit Review'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button
+                onClick={closePeerReviewModal}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: '#666',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
