@@ -344,6 +344,19 @@ app.post('/api/projects/:projectId/move-student', async (req, res) => {
     const { projectId } = req.params;
     const { studentId, toTeamId } = req.body;
 
+    // Check if project is completed
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(projectId) }
+    });
+    
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    if (project.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot join or leave teams for a completed project' });
+    }
+
     // Remove from any team in this project
     const memberships = await prisma.teamMember.findMany({
       where: { studentId: parseInt(studentId), team: { projectId: parseInt(projectId) } }
@@ -560,8 +573,20 @@ app.post('/api/teams/:teamId/members', async (req, res) => {
     // Check if team is full
     const team = await prisma.team.findUnique({
       where: { id: parseInt(teamId) },
-      include: { members: true }
+      include: { 
+        members: true,
+        project: true
+      }
     });
+    
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    // Check if project is completed
+    if (team.project && team.project.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot join teams for a completed project' });
+    }
     
     if (team.members.length >= team.maxMembers) {
       return res.status(400).json({ error: 'Team is full' });
@@ -699,6 +724,23 @@ app.get('/api/projects/:projectId/teams', async (req, res) => {
 app.delete('/api/teams/:teamId/members/:studentId', async (req, res) => {
   try {
     const { teamId, studentId } = req.params;
+    
+    // Get team with project to check status
+    const team = await prisma.team.findUnique({
+      where: { id: parseInt(teamId) },
+      include: {
+        project: true
+      }
+    });
+    
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    // Check if project is completed
+    if (team.project && team.project.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot leave teams for a completed project' });
+    }
     
     await prisma.teamMember.deleteMany({
       where: {
@@ -917,6 +959,186 @@ function calculateTeamBalanceScore(teams) {
   
   return skillDiversity + availabilityBalance;
 }
+
+// Peer Review routes
+// Submit a peer review
+app.post('/api/peer-reviews', async (req, res) => {
+  try {
+    const { reviewerId, revieweeId, projectId, reviewText } = req.body;
+    
+    if (!reviewerId || !revieweeId || !projectId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Verify the project exists and is completed
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(projectId) }
+    });
+    
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    if (project.status !== 'completed') {
+      return res.status(400).json({ error: 'Project must be completed to submit peer reviews' });
+    }
+    
+    // Verify both students are in the same team for this project
+    const reviewerTeam = await prisma.teamMember.findFirst({
+      where: {
+        studentId: parseInt(reviewerId),
+        team: { projectId: parseInt(projectId) }
+      },
+      include: { team: true }
+    });
+    
+    const revieweeTeam = await prisma.teamMember.findFirst({
+      where: {
+        studentId: parseInt(revieweeId),
+        team: { projectId: parseInt(projectId) }
+      },
+      include: { team: true }
+    });
+    
+    if (!reviewerTeam || !revieweeTeam) {
+      return res.status(400).json({ error: 'Both students must be in teams for this project' });
+    }
+    
+    if (reviewerTeam.teamId !== revieweeTeam.teamId) {
+      return res.status(400).json({ error: 'Students must be in the same team' });
+    }
+    
+    if (parseInt(reviewerId) === parseInt(revieweeId)) {
+      return res.status(400).json({ error: 'Cannot review yourself' });
+    }
+    
+    // Create or update the peer review
+    const peerReview = await prisma.peerReview.upsert({
+      where: {
+        reviewerId_revieweeId_projectId: {
+          reviewerId: parseInt(reviewerId),
+          revieweeId: parseInt(revieweeId),
+          projectId: parseInt(projectId)
+        }
+      },
+      update: {
+        reviewText: reviewText || null
+      },
+      create: {
+        reviewerId: parseInt(reviewerId),
+        revieweeId: parseInt(revieweeId),
+        projectId: parseInt(projectId),
+        reviewText: reviewText || null
+      },
+      include: {
+        reviewer: { select: { id: true, name: true, email: true } },
+        reviewee: { select: { id: true, name: true, email: true } }
+      }
+    });
+    
+    res.json(peerReview);
+  } catch (error) {
+    console.error('Error submitting peer review:', error);
+    res.status(500).json({ error: 'Failed to submit peer review' });
+  }
+});
+
+// Get peer reviews for a project (for instructor)
+app.get('/api/projects/:projectId/peer-reviews', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    const peerReviews = await prisma.peerReview.findMany({
+      where: { projectId: parseInt(projectId) },
+      include: {
+        reviewer: { select: { id: true, name: true, email: true } },
+        reviewee: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json(peerReviews);
+  } catch (error) {
+    console.error('Error fetching peer reviews:', error);
+    res.status(500).json({ error: 'Failed to fetch peer reviews' });
+  }
+});
+
+// Get peer reviews for a student in a project (for student to see their own reviews)
+app.get('/api/projects/:projectId/peer-reviews/student/:studentId', async (req, res) => {
+  try {
+    const { projectId, studentId } = req.params;
+    
+    const peerReviews = await prisma.peerReview.findMany({
+      where: {
+        projectId: parseInt(projectId),
+        reviewerId: parseInt(studentId)
+      },
+      include: {
+        reviewee: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json(peerReviews);
+  } catch (error) {
+    console.error('Error fetching student peer reviews:', error);
+    res.status(500).json({ error: 'Failed to fetch peer reviews' });
+  }
+});
+
+// Get team members for a student in a project (to know who to review)
+app.get('/api/projects/:projectId/team-members/:studentId', async (req, res) => {
+  try {
+    const { projectId, studentId } = req.params;
+    
+    // Find the student's team
+    const teamMember = await prisma.teamMember.findFirst({
+      where: {
+        studentId: parseInt(studentId),
+        team: { projectId: parseInt(projectId) }
+      },
+      include: {
+        team: {
+          include: {
+            members: {
+              include: {
+                student: { select: { id: true, name: true, email: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    if (!teamMember) {
+      return res.json({ teamMembers: [] });
+    }
+    
+    // Get existing reviews to show which ones are already submitted
+    const existingReviews = await prisma.peerReview.findMany({
+      where: {
+        reviewerId: parseInt(studentId),
+        projectId: parseInt(projectId)
+      },
+      select: { revieweeId: true }
+    });
+    
+    const reviewedIds = new Set(existingReviews.map(r => r.revieweeId));
+    
+    const teamMembers = teamMember.team.members
+      .filter(m => m.student.id !== parseInt(studentId)) // Exclude self
+      .map(m => ({
+        ...m.student,
+        hasReview: reviewedIds.has(m.student.id)
+      }));
+    
+    res.json({ teamMembers });
+  } catch (error) {
+    console.error('Error fetching team members:', error);
+    res.status(500).json({ error: 'Failed to fetch team members' });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

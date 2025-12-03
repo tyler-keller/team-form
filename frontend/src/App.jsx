@@ -24,8 +24,7 @@ function App() {
       <Routes>
   <Route path="/" element={<LandingPage />} />
   <Route path="/sign-in" element={<SignInPage />} />
-  <Route path="/register/instructor" element={<RegistrationPage userType="instructor" />} />
-  <Route path="/register/student" element={<RegistrationPage userType="student" />} />
+  <Route path="/register/:role" element={<RegistrationPage />} />
   <Route path="/instructor" element={<InstructorDashboard />} />
   <Route path="/project/:projectId" element={<ProjectDetails />} />
   <Route path="/student" element={<StudentProfileForm />} />

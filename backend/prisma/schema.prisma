@@ -37,6 +37,7 @@ model Project {
   courseId        Int?
   course          Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
   teams           Team[]
+  peerReviews     PeerReview[]
 }
 
 model Student {
@@ -53,6 +54,8 @@ model Student {
   updatedAt   DateTime @updatedAt
   
   teamMemberships TeamMember[]
+  reviewsGiven    PeerReview[] @relation("Reviewer")
+  reviewsReceived PeerReview[] @relation("Reviewee")
 }
 
 model Team {
@@ -89,4 +92,20 @@ model Course {
   updatedAt DateTime  @updatedAt
 
   projects  Project[]
+}
+
+model PeerReview {
+  id          Int      @id @default(autoincrement())
+  reviewerId  Int      // Student who wrote the review
+  revieweeId  Int      // Student being reviewed
+  projectId   Int      // Project this review is for
+  reviewText  String?  // The review content
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  reviewer    Student  @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee    Student  @relation("Reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@unique([reviewerId, revieweeId, projectId])
 }

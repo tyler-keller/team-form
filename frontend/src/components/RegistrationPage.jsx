@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import './RegistrationPage.css';
 
 const RegistrationPage = () => {
-  const [selectedRole, setSelectedRole] = useState('student');
+  const navigate = useNavigate();
+  const { role } = useParams();
+  const location = useLocation();
+  // Get role from URL param, location state, or default to 'student'
+  // Validate that role is either 'student' or 'instructor'
+  const roleFromUrl = role && (role === 'student' || role === 'instructor') ? role : null;
+  const initialRole = roleFromUrl || location.state?.role || 'student';
+  const [selectedRole, setSelectedRole] = useState(initialRole);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Update role if URL param changes
+  useEffect(() => {
+    if (roleFromUrl) {
+      setSelectedRole(roleFromUrl);
+    } else if (location.state?.role) {
+      setSelectedRole(location.state.role);
+    }
+  }, [roleFromUrl, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,9 +37,13 @@ const RegistrationPage = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');
-      setSuccess('Registration successful! You can now sign in.');
+      setSuccess('Registration successful! Redirecting to sign in...');
       setEmail('');
       setPassword('');
+      // Redirect to sign-in page after a short delay, preserving the role
+      setTimeout(() => {
+        navigate('/sign-in', { state: { role: selectedRole } });
+      }, 1500);
     } catch (err) {
       setError(err.message);
     }
@@ -88,6 +109,15 @@ const RegistrationPage = () => {
           {success}
         </div>
       )}
+      <div className="signin-link-container" style={{ marginTop: '1.5rem' }}>
+        <button
+          className="signin-link"
+          type="button"
+          onClick={() => navigate('/sign-in', { state: { role: selectedRole } })}
+        >
+          Back to Sign In
+        </button>
+      </div>
     </div>
   );
 };

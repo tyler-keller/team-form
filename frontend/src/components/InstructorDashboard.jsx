@@ -17,6 +17,9 @@ const InstructorDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateProject, setShowCreateProject] = useState(false)
+  const [peerReviews, setPeerReviews] = useState({}) // { projectId: reviews[] }
+  const [loadingReviews, setLoadingReviews] = useState({}) // { projectId: boolean }
+  const [expandedProjectReviews, setExpandedProjectReviews] = useState(null) // projectId or null
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -129,6 +132,47 @@ const InstructorDashboard = () => {
         alert('Failed to parse CSV file.')
       }
     })
+  }
+
+  const fetchPeerReviews = async (projectId) => {
+    if (loadingReviews[projectId]) return
+    
+    try {
+      setLoadingReviews(prev => ({ ...prev, [projectId]: true }))
+      const response = await axios.get(`/api/projects/${projectId}/peer-reviews`)
+      setPeerReviews(prev => ({ ...prev, [projectId]: response.data }))
+    } catch (error) {
+      console.error('Error fetching peer reviews:', error)
+      setPeerReviews(prev => ({ ...prev, [projectId]: [] }))
+    } finally {
+      setLoadingReviews(prev => ({ ...prev, [projectId]: false }))
+    }
+  }
+
+  const toggleProjectReviews = (projectId) => {
+    if (expandedProjectReviews === projectId) {
+      setExpandedProjectReviews(null)
+    } else {
+      setExpandedProjectReviews(projectId)
+      if (!peerReviews[projectId] && !loadingReviews[projectId]) {
+        fetchPeerReviews(projectId)
+      }
+    }
+  }
+
+  const groupReviewsByReviewee = (reviews) => {
+    const grouped = {}
+    reviews.forEach(review => {
+      const key = review.reviewee.id
+      if (!grouped[key]) {
+        grouped[key] = {
+          reviewee: review.reviewee,
+          reviews: []
+        }
+      }
+      grouped[key].reviews.push(review)
+    })
+    return Object.values(grouped)
   }
 
   if (loading) {
@@ -341,6 +385,78 @@ const InstructorDashboard = () => {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {project.status === 'completed' && (
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                      <button
+                        onClick={() => toggleProjectReviews(project.id)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          background: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: '500'
+                        }}
+                      >
+                        {expandedProjectReviews === project.id ? 'Hide' : 'View'} Peer Reviews
+                      </button>
+                      
+                      {expandedProjectReviews === project.id && (
+                        <div style={{ marginTop: '1rem' }}>
+                          {loadingReviews[project.id] ? (
+                            <div style={{ padding: '1rem', textAlign: 'center', color: 'rgba(240, 240, 240, 0.7)' }}>
+                              Loading peer reviews...
+                            </div>
+                          ) : peerReviews[project.id] && peerReviews[project.id].length > 0 ? (
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                              {groupReviewsByReviewee(peerReviews[project.id]).map(group => (
+                                <div key={group.reviewee.id} style={{ 
+                                  padding: '1rem', 
+                                  background: 'rgba(255, 255, 255, 0.05)', 
+                                  borderRadius: '8px',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                                }}>
+                                  <h5 style={{ margin: '0 0 0.75rem 0', color: '#f0f0f0' }}>
+                                    Reviews for: {group.reviewee.name || group.reviewee.email}
+                                  </h5>
+                                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                    {group.reviews.map(review => (
+                                      <div key={review.id} style={{
+                                        padding: '0.75rem',
+                                        background: 'rgba(0, 0, 0, 0.2)',
+                                        borderRadius: '6px',
+                                        borderLeft: '3px solid #4CAF50'
+                                      }}>
+                                        <div style={{ 
+                                          fontSize: '0.875rem', 
+                                          color: 'rgba(240, 240, 240, 0.8)',
+                                          marginBottom: '0.5rem'
+                                        }}>
+                                          <strong>From:</strong> {review.reviewer.name || review.reviewer.email}
+                                          <span style={{ marginLeft: '1rem', fontSize: '0.75rem' }}>
+                                            {new Date(review.createdAt).toLocaleDateString()}
+                                          </span>
+                                        </div>
+                                        <div style={{ color: '#f0f0f0', whiteSpace: 'pre-wrap' }}>
+                                          {review.reviewText || <em style={{ color: 'rgba(240, 240, 240, 0.5)' }}>No review text provided</em>}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div style={{ padding: '1rem', textAlign: 'center', color: 'rgba(240, 240, 240, 0.7)' }}>
+                              No peer reviews submitted yet.
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
