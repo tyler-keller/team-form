@@ -4,6 +4,7 @@ import axios from 'axios'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import AvailabilityHeatmap from './AvailabilityHeatmap'
 import './InstructorDashboard.css'
+import './ProjectDetails.css'
 
 const TextArea = (props) => (
   <textarea {...props} style={{ width: '100%' }} />

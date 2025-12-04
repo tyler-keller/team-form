@@ -16,7 +16,7 @@
   padding: 0;
 }
 .signup-link:hover {
-  color: #e0e0e0;
+  color: #1976d2;
 }
 .signin-container {
   display: flex;
@@ -38,15 +38,15 @@
   font-size: 1.1rem;
   border-radius: 8px;
   border: none;
-  background-color: #1976d2;
-  color: #fff;
+  background-color: #4CAF50;
+  color: #f0f0f0;
   cursor: pointer;
   transition: background 0.2s;
   margin: 0 0.5rem;
 }
 
 .signin-btn:hover {
-  background-color: #1565c0;
+  background-color: #388e3c;
 }
 
 .signin-btn.selected {

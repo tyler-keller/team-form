@@ -187,7 +187,7 @@ const InstructorDashboard = () => {
   return (
     <div className="instructor-dashboard">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <button onClick={handleLogout} style={{ padding: '0.5rem 1.2rem', borderRadius: '1rem', background: '#1976d2', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem' }}>Logout</button>
+  <button onClick={handleLogout} className="nav-btn" style={{ marginTop: '1rem' }}>Logout</button>
       </div>
       <h2>Instructor Dashboard</h2>
       
@@ -198,10 +198,7 @@ const InstructorDashboard = () => {
         <div className="section">
           <h3>Instructor</h3>
           <div>
-            Using: {localStorage.getItem('instructorEmail') || 'Unknown'}
-            <div style={{ marginTop: '0.5rem' }}>
-              <button className="toggle-button" onClick={() => navigate('/instructor')}>Switch Instructor</button>
-            </div>
+            {localStorage.getItem('instructorEmail') || 'Unknown'}
           </div>
         </div>
 
@@ -346,7 +343,7 @@ const InstructorDashboard = () => {
                 <div key={project.id} className="project-card">
                   <div className="project-header">
                     <h4><Link to={`/project/${project.id}`}>{project.name}</Link></h4>
-                    <span className="project-status">{project.status}</span>
+                    <span className={`project-status${project.status === 'cancelled' ? ' cancelled' : project.status === 'completed' ? ' completed' : ''}`}>{project.status}</span>
                   </div>
                   <p className="project-description">{project.description}</p>
                   <div className="project-details">

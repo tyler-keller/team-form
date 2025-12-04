@@ -31,7 +31,7 @@ const SignInPage = () => {
         className="signin-input"
         value={selectedRole}
         onChange={e => setSelectedRole(e.target.value)}
-        style={{ marginBottom: '1rem', textAlign: 'center' }}
+        style={{ marginBottom: '1rem', textAlign: 'center', minWidth: '220px', width: '220px' }}
       >
         <option value="student">Student</option>
         <option value="instructor">Instructor</option>
@@ -115,7 +115,7 @@ const SignInPage = () => {
           type="button"
           onClick={() => navigate(`/register/${selectedRole}`)}
         >
-          Sign Up
+          Don't have an account? Register
         </button>
       </div>
     </div>

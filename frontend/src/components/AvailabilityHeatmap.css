@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   overflow-x: auto;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(40, 40, 50, 0.7);
   padding: 1rem;
   border-radius: 8px;
   color: #f0f0f0;
@@ -19,14 +19,14 @@
   text-align: center;
   font-weight: bold;
   font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: #23263a;
 }
 
 .heatmap-time-label {
   padding: 0.25rem 0.5rem;
   text-align: right;
   font-size: 0.7rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: #23263a;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -34,7 +34,7 @@
 
 .heatmap-cell {
   height: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid #444;
   position: relative;
   transition: background-color 0.2s;
 }
@@ -45,8 +45,8 @@
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
+  background: #181a20;
+  color: #f0f0f0;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.7rem;
@@ -68,5 +68,5 @@
   width: 100px;
   height: 10px;
   background: linear-gradient(to right, rgba(76, 175, 80, 0), rgba(76, 175, 80, 1));
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #4CAF50;
 }

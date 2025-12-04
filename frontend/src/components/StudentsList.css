@@ -18,7 +18,7 @@
 
 .refresh-button {
   background: #4CAF50;
-  color: white;
+  color: #f0f0f0;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -27,28 +27,28 @@
 }
 
 .refresh-button:hover {
-  background: #45a049;
+  background: #388e3c;
 }
 
 .loading, .error, .no-students {
   text-align: center;
   padding: 2rem;
   color: #f0f0f0;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(40, 40, 50, 0.7);
   border-radius: 10px;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(60, 60, 80, 0.3);
 }
 
 .error {
   color: #ffcdd2;
-  background: rgba(244, 67, 54, 0.2);
-  border-color: rgba(244, 67, 54, 0.5);
+  background: rgba(244, 67, 54, 0.15);
+  border-color: rgba(244, 67, 54, 0.4);
 }
 
 .retry-button {
   background: #4CAF50;
-  color: white;
+  color: #f0f0f0;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -58,7 +58,7 @@
 }
 
 .retry-button:hover {
-  background: #45a049;
+  background: #388e3c;
 }
 
 .students-grid {
