@@ -317,16 +317,6 @@ const InstructorDashboard = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="fileUpload">Or upload CSV file</label>
-                <input
-                  type="file"
-                  id="fileUpload"
-                  accept=".csv"
-                  onChange={handleFileUpload}
-                />
-              </div>
-              
               <button type="submit" className="submit-button">Create Project & Send Invitations</button>
             </form>
           )}
