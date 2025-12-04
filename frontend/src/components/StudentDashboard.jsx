@@ -2,6 +2,74 @@ import './StudentDashboard.css';
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import AvailabilityHeatmap from './AvailabilityHeatmap';
+
+// Helper to parse availability
+const parseAvailability = (avail) => {
+  if (!avail) return {};
+  if (typeof avail === 'string') {
+    try {
+      return JSON.parse(avail);
+    } catch {
+      return {};
+    }
+  }
+  return avail;
+};
+
+// Helper to calculate match
+const calculateMatch = (student, teamMembers) => {
+  if (!student || !student.availability) return 0;
+  
+  // Filter out the student themselves if they are in the list
+  const otherMembers = teamMembers.filter(m => m.studentId !== student.id && m.student?.id !== student.id);
+  
+  if (otherMembers.length === 0) return 100; // No other members, 100% match
+
+  const studentAvail = parseAvailability(student.availability);
+  
+  // Flatten team availability
+  const teamSlots = {};
+  
+  const validMembers = otherMembers.filter(m => m.student && m.student.availability);
+  if (validMembers.length === 0) return 100; // No availability data for others, assume match
+
+  validMembers.forEach(member => {
+    const avail = parseAvailability(member.student.availability);
+    Object.keys(avail).forEach(day => {
+      Object.keys(avail[day]).forEach(time => {
+        if (avail[day][time]) {
+          if (!teamSlots[day]) teamSlots[day] = {};
+          if (!teamSlots[day][time]) teamSlots[day][time] = 0;
+          teamSlots[day][time]++;
+        }
+      });
+    });
+  });
+
+  let matchScore = 0;
+  let maxPossibleScore = 0;
+
+  // Iterate over all possible slots that the TEAM has availability for
+  Object.keys(teamSlots).forEach(day => {
+    Object.keys(teamSlots[day]).forEach(time => {
+      const count = teamSlots[day][time];
+      // Weight is proportional to how many members are available
+      const weight = count / validMembers.length;
+      
+      maxPossibleScore += weight;
+      
+      // Check if student is available
+      if (studentAvail[day] && studentAvail[day][time]) {
+        matchScore += weight;
+      }
+    });
+  });
+
+  if (maxPossibleScore === 0) return 0; 
+  
+  return Math.round((matchScore / maxPossibleScore) * 100);
+};
 
 const StudentDashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -9,6 +77,8 @@ const StudentDashboard = () => {
   const [error, setError] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [student, setStudent] = useState(null);
+  const [allStudents, setAllStudents] = useState([]);
+  const [expandedTeamId, setExpandedTeamId] = useState(null);
   const [editingTeam, setEditingTeam] = useState(null); // { project, team }
   const [editValues, setEditValues] = useState({ name: '', description: '', maxMembers: '' });
   const [editError, setEditError] = useState('');
@@ -34,6 +104,8 @@ const StudentDashboard = () => {
         axios.get('/api/projects'),
         axios.get('/api/students')
       ]);
+
+      setAllStudents(studentsResponse.data || []);
 
       const currentStudent = (studentsResponse.data || []).find(s => s.email === email) || null;
       setStudent(currentStudent || null);
@@ -285,6 +357,19 @@ const StudentDashboard = () => {
               const currentTeamId = getStudentCurrentTeamIdForProject(project);
               const isCompleted = project.status === 'completed';
               const isInTeam = currentTeamId !== null;
+
+              // Calculate unregistered students
+              let invitedEmails = [];
+              try {
+                invitedEmails = JSON.parse(project.studentEmails || '[]');
+              } catch (e) {
+                invitedEmails = [];
+              }
+              const registeredEmails = new Set(allStudents.map(s => s.email));
+              const unregisteredEmails = invitedEmails.filter(email => !registeredEmails.has(email));
+
+              console.log('Rendering project:', project.name, 'Current team ID:', currentTeamId, 'Unregistered emails:', unregisteredEmails);
+
               return (
                 <div key={project.id} className="project-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -328,6 +413,9 @@ const StudentDashboard = () => {
                         const members = team.members || [];
                         const isFull = members.length >= (team.maxMembers || 0);
                         const isCurrentTeam = currentTeamId === team.id;
+                        const matchPercent = calculateMatch(student, members);
+                        const isExpanded = expandedTeamId === team.id;
+
                         return (
                           <div key={team.id} className="team-card">
                             <div className="team-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
@@ -375,6 +463,26 @@ const StudentDashboard = () => {
                               ))}
                               {members.length === 0 ? <div className="member-row">No members yet</div> : null}
                             </div>
+
+                            <div className="team-availability-section" style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginBottom: '0.5rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.85rem', color: '#aaa' }}>
+                                  Availability Match: <strong style={{ color: matchPercent > 70 ? '#4CAF50' : matchPercent > 40 ? '#FFC107' : '#F44336' }}>{matchPercent}%</strong>
+                                </span>
+                                <button 
+                                  onClick={() => setExpandedTeamId(isExpanded ? null : team.id)}
+                                  style={{ background: 'none', border: 'none', color: '#646cff', cursor: 'pointer', fontSize: '0.85rem', padding: 0, textDecoration: 'underline' }}
+                                >
+                                  {isExpanded ? 'Hide Availability' : 'View Team Availability'}
+                                </button>
+                              </div>
+                              {isExpanded && (
+                                <div style={{ marginTop: '0.5rem' }}>
+                                  <AvailabilityHeatmap students={members.map(m => m.student).filter(Boolean)} />
+                                </div>
+                              )}
+                            </div>
+
                             <div className="team-actions">
                               {isCurrentTeam ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
@@ -410,6 +518,28 @@ const StudentDashboard = () => {
                       })}
                     </div>
                   </div>
+
+                  {unregisteredEmails.length > 0 && (
+                    <div className="unregistered-section" style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px' }}>
+                      <h5 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#aaa' }}>Pending Registrations ({unregisteredEmails.length})</h5>
+                      <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.5rem' }}>
+                        The following students have been invited but haven't created an account yet.
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {unregisteredEmails.map(email => (
+                          <span key={email} style={{ 
+                            padding: '0.25rem 0.75rem', 
+                            background: 'rgba(255, 255, 255, 0.1)', 
+                            borderRadius: '16px', 
+                            fontSize: '0.85rem',
+                            color: '#ccc'
+                          }}>
+                            {email}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
