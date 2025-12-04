@@ -1,3 +1,4 @@
+import './StudentDashboard.css';
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -269,9 +270,9 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="student-dashboard">
+    <div className="student-dashboard team-dashboard">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <button onClick={() => { localStorage.clear(); navigate('/'); }} style={{ padding: '0.5rem 1.2rem', borderRadius: '1rem', background: '#1976d2', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem', marginRight: '1rem' }}>Logout</button>
+        <button onClick={() => { localStorage.clear(); navigate('/'); }} className="nav-btn" style={{ marginTop: '1rem', marginRight: '1rem' }}>Logout</button>
       </div>
       <h2>Student Dashboard</h2>
       {/* Only className for styling, no inline style here! */}
@@ -288,13 +289,15 @@ const StudentDashboard = () => {
                 <div key={project.id} className="project-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <h4>{project.name}</h4>
-                    <span style={{ 
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '12px',
-                      fontSize: '0.875rem',
-                      background: project.status === 'completed' ? '#4CAF50' : project.status === 'cancelled' ? '#f44336' : '#2196F3',
-                      color: 'white'
-                    }}>
+                    <span
+                      className={`project-status-span${project.status === 'cancelled' ? ' cancelled' : project.status === 'completed' ? ' completed' : project.status === 'active' ? ' active' : ''}`}
+                      style={{
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '12px',
+                        fontSize: '0.875rem',
+                        color: 'white'
+                      }}
+                    >
                       {project.status}
                     </span>
                   </div>
@@ -380,11 +383,6 @@ const StudentDashboard = () => {
                                     onClick={() => handleLeaveTeam(project.id, team.id)}
                                     disabled={project.status === 'completed'}
                                     style={{
-                                      padding: '0.5rem 1rem',
-                                      background: '#f44336',
-                                      color: 'white',
-                                      border: 'none',
-                                      borderRadius: '6px',
                                       cursor: project.status === 'completed' ? 'not-allowed' : 'pointer',
                                       opacity: project.status === 'completed' ? 0.6 : 1
                                     }}
