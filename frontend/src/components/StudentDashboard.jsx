@@ -9,6 +9,7 @@ const StudentDashboard = () => {
   const [error, setError] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [student, setStudent] = useState(null);
+  const [allStudents, setAllStudents] = useState([]);
   const [editingTeam, setEditingTeam] = useState(null); // { project, team }
   const [editValues, setEditValues] = useState({ name: '', description: '', maxMembers: '' });
   const [editError, setEditError] = useState('');
@@ -34,6 +35,8 @@ const StudentDashboard = () => {
         axios.get('/api/projects'),
         axios.get('/api/students')
       ]);
+
+      setAllStudents(studentsResponse.data || []);
 
       const currentStudent = (studentsResponse.data || []).find(s => s.email === email) || null;
       setStudent(currentStudent || null);
@@ -285,6 +288,19 @@ const StudentDashboard = () => {
               const currentTeamId = getStudentCurrentTeamIdForProject(project);
               const isCompleted = project.status === 'completed';
               const isInTeam = currentTeamId !== null;
+
+              // Calculate unregistered students
+              let invitedEmails = [];
+              try {
+                invitedEmails = JSON.parse(project.studentEmails || '[]');
+              } catch (e) {
+                invitedEmails = [];
+              }
+              const registeredEmails = new Set(allStudents.map(s => s.email));
+              const unregisteredEmails = invitedEmails.filter(email => !registeredEmails.has(email));
+
+              console.log('Rendering project:', project.name, 'Current team ID:', currentTeamId, 'Unregistered emails:', unregisteredEmails);
+
               return (
                 <div key={project.id} className="project-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -410,6 +426,28 @@ const StudentDashboard = () => {
                       })}
                     </div>
                   </div>
+
+                  {unregisteredEmails.length > 0 && (
+                    <div className="unregistered-section" style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px' }}>
+                      <h5 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#aaa' }}>Pending Registrations ({unregisteredEmails.length})</h5>
+                      <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.5rem' }}>
+                        The following students have been invited but haven't created an account yet.
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {unregisteredEmails.map(email => (
+                          <span key={email} style={{ 
+                            padding: '0.25rem 0.75rem', 
+                            background: 'rgba(255, 255, 255, 0.1)', 
+                            borderRadius: '16px', 
+                            fontSize: '0.85rem',
+                            color: '#ccc'
+                          }}>
+                            {email}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
