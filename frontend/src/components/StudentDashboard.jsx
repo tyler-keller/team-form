@@ -396,6 +396,10 @@ const StudentDashboard = () => {
                                   onClick={() => handleJoinTeam(project.id, team)}
                                   disabled={isFull || project.status === 'completed'}
                                   className="join-btn"
+                                  style={{
+                                    opacity: (isFull || project.status === 'completed') ? 0.6 : 1,
+                                    cursor: (isFull || project.status === 'completed') ? 'not-allowed' : 'pointer'
+                                  }}
                                 >
                                   {project.status === 'completed' ? 'Project Completed' : isFull ? 'Team Full' : 'Join Team'}
                                 </button>
